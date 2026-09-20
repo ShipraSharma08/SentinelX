@@ -279,3 +279,94 @@ CREATE INDEX idx_alerts_security_event
 -- Index for linking alerts to ML predictions
 CREATE INDEX idx_alerts_ml_prediction
     ON alerts(ml_prediction_id);
+    -- ============================================================
+-- SECURITY INCIDENTS
+-- ============================================================
+
+CREATE TABLE incidents (
+    id BIGSERIAL PRIMARY KEY,
+
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+
+    severity VARCHAR(20) NOT NULL DEFAULT 'MEDIUM',
+
+    status VARCHAR(30) NOT NULL DEFAULT 'OPEN',
+
+    assigned_to BIGINT
+        REFERENCES users(id)
+        ON DELETE SET NULL,
+
+    detected_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    acknowledged_at TIMESTAMPTZ,
+    resolved_at TIMESTAMPTZ,
+
+    resolution_notes TEXT,
+
+    CONSTRAINT chk_incident_severity
+        CHECK (severity IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+
+    CONSTRAINT chk_incident_status
+        CHECK (status IN ('OPEN', 'INVESTIGATING', 'CONTAINED', 'RESOLVED'))
+);
+
+-- Index for filtering incidents by severity
+CREATE INDEX idx_incidents_severity
+    ON incidents(severity);
+
+-- Index for SOC dashboard status filtering
+CREATE INDEX idx_incidents_status
+    ON incidents(status);
+
+-- Index for assigned analyst lookup
+CREATE INDEX idx_incidents_assigned_to
+    ON incidents(assigned_to);
+
+-- Index for recent incident investigation
+CREATE INDEX idx_incidents_detected_at
+    ON incidents(detected_at);
+    -- ============================================================
+-- THREAT INTELLIGENCE INDICATORS
+-- ============================================================
+
+CREATE TABLE threat_indicators (
+    id BIGSERIAL PRIMARY KEY,
+
+    indicator_type VARCHAR(30) NOT NULL,
+    indicator_value VARCHAR(500) NOT NULL,
+
+    threat_type VARCHAR(100),
+
+    confidence VARCHAR(20) NOT NULL DEFAULT 'MEDIUM',
+
+    source VARCHAR(255),
+
+    first_seen TIMESTAMPTZ,
+    last_seen TIMESTAMPTZ,
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_indicator_type
+        CHECK (indicator_type IN ('IP', 'DOMAIN', 'URL', 'HASH', 'EMAIL')),
+
+    CONSTRAINT chk_indicator_confidence
+        CHECK (confidence IN ('LOW', 'MEDIUM', 'HIGH'))
+);
+
+-- Fast lookup when investigating an indicator
+CREATE INDEX idx_threat_indicators_value
+    ON threat_indicators(indicator_value);
+
+-- Filter indicators by type
+CREATE INDEX idx_threat_indicators_type
+    ON threat_indicators(indicator_type);
+
+-- Filter active indicators
+CREATE INDEX idx_threat_indicators_active
+    ON threat_indicators(is_active);
+
+-- Track recently observed indicators
+CREATE INDEX idx_threat_indicators_last_seen
+    ON threat_indicators(last_seen);
