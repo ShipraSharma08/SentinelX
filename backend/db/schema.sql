@@ -370,3 +370,207 @@ CREATE INDEX idx_threat_indicators_active
 -- Track recently observed indicators
 CREATE INDEX idx_threat_indicators_last_seen
     ON threat_indicators(last_seen);
+    CREATE TABLE mitre_techniques (
+    id BIGSERIAL PRIMARY KEY,
+    technique_id VARCHAR(20) NOT NULL UNIQUE,
+    technique_name VARCHAR(255) NOT NULL,
+    tactic VARCHAR(100),
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_mitre_techniques_technique_id
+ON mitre_techniques(technique_id);
+
+CREATE INDEX idx_mitre_techniques_tactic
+ON mitre_techniques(tactic);
+CREATE TABLE alert_mitre_techniques (
+    alert_id BIGINT NOT NULL,
+    technique_id BIGINT NOT NULL,
+    confidence NUMERIC(5,4),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (alert_id, technique_id),
+
+    CONSTRAINT fk_alert_mitre_alert
+        FOREIGN KEY (alert_id)
+        REFERENCES alerts(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_alert_mitre_technique
+        FOREIGN KEY (technique_id)
+        REFERENCES mitre_techniques(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_alert_mitre_confidence
+        CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))
+);
+
+CREATE INDEX idx_alert_mitre_technique
+ON alert_mitre_techniques(technique_id);
+CREATE TABLE incident_alerts (
+    incident_id BIGINT NOT NULL,
+    alert_id BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (incident_id, alert_id),
+
+    CONSTRAINT fk_incident_alert_incident
+        FOREIGN KEY (incident_id)
+        REFERENCES incidents(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_incident_alert_alert
+        FOREIGN KEY (alert_id)
+        REFERENCES alerts(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_incident_alerts_alert
+ON incident_alerts(alert_id);
+CREATE TABLE event_threat_indicators (
+    event_id BIGINT NOT NULL,
+    indicator_id BIGINT NOT NULL,
+    match_type VARCHAR(50),
+    confidence NUMERIC(5,4),
+    matched_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (event_id, indicator_id),
+
+    CONSTRAINT fk_event_indicator_event
+        FOREIGN KEY (event_id)
+        REFERENCES security_events(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_event_indicator_indicator
+        FOREIGN KEY (indicator_id)
+        REFERENCES threat_indicators(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_event_indicator_confidence
+        CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))
+);
+
+CREATE INDEX idx_event_threat_indicators_indicator
+ON event_threat_indicators(indicator_id);
+CREATE TABLE attack_sequences (
+    id BIGSERIAL PRIMARY KEY,
+    source_asset_id BIGINT REFERENCES assets(id) ON DELETE SET NULL,
+    sequence_name VARCHAR(255) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+    start_time TIMESTAMPTZ NOT NULL,
+    end_time TIMESTAMPTZ,
+    confidence NUMERIC(5,4),
+    risk_score NUMERIC(5,2),
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_attack_sequence_status
+        CHECK (status IN ('ACTIVE', 'COMPLETED', 'ABORTED')),
+
+    CONSTRAINT chk_attack_sequence_confidence
+        CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
+
+    CONSTRAINT chk_attack_sequence_risk_score
+        CHECK (risk_score IS NULL OR (risk_score >= 0 AND risk_score <= 100)),
+
+    CONSTRAINT chk_attack_sequence_time
+        CHECK (end_time IS NULL OR end_time >= start_time)
+);
+
+CREATE INDEX idx_attack_sequences_source_asset
+ON attack_sequences(source_asset_id);
+
+CREATE INDEX idx_attack_sequences_status
+ON attack_sequences(status);
+
+CREATE INDEX idx_attack_sequences_start_time
+ON attack_sequences(start_time);
+
+CREATE INDEX idx_attack_sequences_risk_score
+ON attack_sequences(risk_score);
+CREATE TABLE attack_sequence_events (
+    sequence_id BIGINT NOT NULL,
+    event_id BIGINT NOT NULL,
+    sequence_order INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (sequence_id, event_id),
+
+    CONSTRAINT fk_sequence_event_sequence
+        FOREIGN KEY (sequence_id)
+        REFERENCES attack_sequences(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_sequence_event_event
+        FOREIGN KEY (event_id)
+        REFERENCES security_events(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_sequence_event_order
+        CHECK (sequence_order > 0),
+
+    CONSTRAINT uq_sequence_event_order
+        UNIQUE (sequence_id, sequence_order)
+);
+
+CREATE INDEX idx_attack_sequence_events_event
+ON attack_sequence_events(event_id);
+
+CREATE INDEX idx_attack_sequence_events_order
+ON attack_sequence_events(sequence_id, sequence_order);
+CREATE TABLE risk_scores (
+    id BIGSERIAL PRIMARY KEY,
+    alert_id BIGINT REFERENCES alerts(id) ON DELETE CASCADE,
+    incident_id BIGINT REFERENCES incidents(id) ON DELETE CASCADE,
+    sequence_id BIGINT REFERENCES attack_sequences(id) ON DELETE CASCADE,
+    score NUMERIC(5,2) NOT NULL,
+    risk_level VARCHAR(20) NOT NULL,
+    scoring_method VARCHAR(100),
+    explanation TEXT,
+    calculated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_risk_score_value
+        CHECK (score >= 0 AND score <= 100),
+
+    CONSTRAINT chk_risk_level
+        CHECK (risk_level IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'))
+);
+
+CREATE INDEX idx_risk_scores_alert
+ON risk_scores(alert_id);
+
+CREATE INDEX idx_risk_scores_incident
+ON risk_scores(incident_id);
+
+CREATE INDEX idx_risk_scores_sequence
+ON risk_scores(sequence_id);
+
+CREATE INDEX idx_risk_scores_score
+ON risk_scores(score);
+
+CREATE INDEX idx_risk_scores_calculated_at
+ON risk_scores(calculated_at);
+CREATE TABLE audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(100),
+    resource_id BIGINT,
+    ip_address INET,
+    details JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_audit_logs_user
+ON audit_logs(user_id);
+
+CREATE INDEX idx_audit_logs_action
+ON audit_logs(action);
+
+CREATE INDEX idx_audit_logs_resource
+ON audit_logs(resource_type, resource_id);
+
+CREATE INDEX idx_audit_logs_created_at
+ON audit_logs(created_at);
+
