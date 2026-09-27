@@ -18,7 +18,7 @@ public class Role {
     private String description;
 
     @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+    private OffsetDateTime createdAt;
 
     public Role() {
     }
