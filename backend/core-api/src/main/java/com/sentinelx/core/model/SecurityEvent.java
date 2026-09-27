@@ -17,7 +17,7 @@ public class SecurityEvent {
     private String eventType;
 
     @Column(nullable = false, length = 20)
-    private String severity = "MEDIUM";
+    private String severity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_asset_id")
