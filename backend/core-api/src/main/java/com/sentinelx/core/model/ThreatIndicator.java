@@ -21,7 +21,7 @@ public class ThreatIndicator {
     private String threatType;
 
     @Column(nullable = false, length = 20)
-    private String confidence = "MEDIUM";
+    private String confidence;
 
     @Column(length = 255)
     private String source;
@@ -33,7 +33,7 @@ public class ThreatIndicator {
     private OffsetDateTime lastSeen;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active = true;
+    private Boolean active;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -43,6 +43,10 @@ public class ThreatIndicator {
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getIndicatorType() {
@@ -101,11 +105,11 @@ public class ThreatIndicator {
         this.lastSeen = lastSeen;
     }
 
-    public boolean isActive() {
+    public Boolean getActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 

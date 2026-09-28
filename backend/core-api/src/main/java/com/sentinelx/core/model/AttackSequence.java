@@ -25,7 +25,7 @@ public class AttackSequence {
     @Column(name = "start_time", nullable = false)
     private OffsetDateTime startTime;
 
-    @Column(name = "end_time")
+    @Column(name = "end_time", nullable = false)
     private OffsetDateTime endTime;
 
     @Column(precision = 5, scale = 4)
@@ -42,6 +42,10 @@ public class AttackSequence {
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Asset getSourceAsset() {

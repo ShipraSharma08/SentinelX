@@ -1,0 +1,7 @@
+package com.sentinelx.core.repository;
+
+import com.sentinelx.core.model.MLPrediction;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface MLPredictionRepository extends JpaRepository<MLPrediction, Long> {
+}

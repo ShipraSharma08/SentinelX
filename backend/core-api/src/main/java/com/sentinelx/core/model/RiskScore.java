@@ -12,17 +12,14 @@ public class RiskScore {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "alert_id", nullable = false)
-    private Alert alert;
+    @Column(name = "alert_id")
+    private Long alertId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "incident_id")
-    private Incident incident;
+    @Column(name = "incident_id")
+    private Long incidentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sequence_id")
-    private AttackSequence sequence;
+    @Column(name = "sequence_id")
+    private Long sequenceId;
 
     @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal score;
@@ -30,7 +27,7 @@ public class RiskScore {
     @Column(name = "risk_level", nullable = false, length = 20)
     private String riskLevel;
 
-    @Column(name = "scoring_method", nullable = false, length = 100)
+    @Column(name = "scoring_method", length = 100)
     private String scoringMethod;
 
     @Column(columnDefinition = "TEXT")
@@ -46,28 +43,32 @@ public class RiskScore {
         return id;
     }
 
-    public Alert getAlert() {
-        return alert;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setAlert(Alert alert) {
-        this.alert = alert;
+    public Long getAlertId() {
+        return alertId;
     }
 
-    public Incident getIncident() {
-        return incident;
+    public void setAlertId(Long alertId) {
+        this.alertId = alertId;
     }
 
-    public void setIncident(Incident incident) {
-        this.incident = incident;
+    public Long getIncidentId() {
+        return incidentId;
     }
 
-    public AttackSequence getSequence() {
-        return sequence;
+    public void setIncidentId(Long incidentId) {
+        this.incidentId = incidentId;
     }
 
-    public void setSequence(AttackSequence sequence) {
-        this.sequence = sequence;
+    public Long getSequenceId() {
+        return sequenceId;
+    }
+
+    public void setSequenceId(Long sequenceId) {
+        this.sequenceId = sequenceId;
     }
 
     public BigDecimal getScore() {
