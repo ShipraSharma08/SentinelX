@@ -33,7 +33,7 @@ public class ThreatIndicator {
     private OffsetDateTime lastSeen;
 
     @Column(name = "is_active", nullable = false)
-    private Boolean active;
+    private boolean active;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -43,10 +43,6 @@ public class ThreatIndicator {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getIndicatorType() {
@@ -105,11 +101,11 @@ public class ThreatIndicator {
         this.lastSeen = lastSeen;
     }
 
-    public Boolean getActive() {
+    public boolean isActive() {
         return active;
     }
 
-    public void setActive(Boolean active) {
+    public void setActive(boolean active) {
         this.active = active;
     }
 
