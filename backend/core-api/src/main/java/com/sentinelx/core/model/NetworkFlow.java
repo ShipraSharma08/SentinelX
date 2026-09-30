@@ -49,6 +49,10 @@ public class NetworkFlow {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public Asset getSourceAsset() {
         return sourceAsset;
     }
