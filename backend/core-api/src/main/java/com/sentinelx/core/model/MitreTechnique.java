@@ -11,17 +11,17 @@ public class MitreTechnique {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "technique_id", nullable = false, unique = true, length = 50)
+    @Column(name = "technique_id", nullable = false, unique = true, length = 20)
     private String techniqueId;
 
-    @Column(nullable = false, length = 255)
-    private String name;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "technique_name", nullable = false, length = 255)
+    private String techniqueName;
 
     @Column(length = 100)
     private String tactic;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -33,10 +33,6 @@ public class MitreTechnique {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getTechniqueId() {
         return techniqueId;
     }
@@ -45,20 +41,12 @@ public class MitreTechnique {
         this.techniqueId = techniqueId;
     }
 
-    public String getName() {
-        return name;
+    public String getTechniqueName() {
+        return techniqueName;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+    public void setTechniqueName(String techniqueName) {
+        this.techniqueName = techniqueName;
     }
 
     public String getTactic() {
@@ -67,6 +55,14 @@ public class MitreTechnique {
 
     public void setTactic(String tactic) {
         this.tactic = tactic;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public OffsetDateTime getCreatedAt() {
