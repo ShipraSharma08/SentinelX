@@ -12,14 +12,17 @@ public class RiskScore {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "alert_id")
-    private Long alertId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alert_id")
+    private Alert alert;
 
-    @Column(name = "incident_id")
-    private Long incidentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "incident_id")
+    private Incident incident;
 
-    @Column(name = "sequence_id")
-    private Long sequenceId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sequence_id")
+    private AttackSequence sequence;
 
     @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal score;
@@ -43,32 +46,28 @@ public class RiskScore {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Alert getAlert() {
+        return alert;
     }
 
-    public Long getAlertId() {
-        return alertId;
+    public void setAlert(Alert alert) {
+        this.alert = alert;
     }
 
-    public void setAlertId(Long alertId) {
-        this.alertId = alertId;
+    public Incident getIncident() {
+        return incident;
     }
 
-    public Long getIncidentId() {
-        return incidentId;
+    public void setIncident(Incident incident) {
+        this.incident = incident;
     }
 
-    public void setIncidentId(Long incidentId) {
-        this.incidentId = incidentId;
+    public AttackSequence getSequence() {
+        return sequence;
     }
 
-    public Long getSequenceId() {
-        return sequenceId;
-    }
-
-    public void setSequenceId(Long sequenceId) {
-        this.sequenceId = sequenceId;
+    public void setSequence(AttackSequence sequence) {
+        this.sequence = sequence;
     }
 
     public BigDecimal getScore() {
