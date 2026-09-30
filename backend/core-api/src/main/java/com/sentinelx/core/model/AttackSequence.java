@@ -12,20 +12,19 @@ public class AttackSequence {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "source_asset_id", nullable = false)
-    private Asset sourceAsset;
+    @Column(name = "source_asset_id")
+    private Long sourceAssetId;
 
     @Column(name = "sequence_name", nullable = false, length = 255)
     private String sequenceName;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 50)
     private String status;
 
     @Column(name = "start_time", nullable = false)
     private OffsetDateTime startTime;
 
-    @Column(name = "end_time", nullable = false)
+    @Column(name = "end_time")
     private OffsetDateTime endTime;
 
     @Column(precision = 5, scale = 4)
@@ -44,16 +43,12 @@ public class AttackSequence {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Long getSourceAssetId() {
+        return sourceAssetId;
     }
 
-    public Asset getSourceAsset() {
-        return sourceAsset;
-    }
-
-    public void setSourceAsset(Asset sourceAsset) {
-        this.sourceAsset = sourceAsset;
+    public void setSourceAssetId(Long sourceAssetId) {
+        this.sourceAssetId = sourceAssetId;
     }
 
     public String getSequenceName() {
