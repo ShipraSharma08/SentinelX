@@ -29,14 +29,15 @@ public class NetworkFlow {
     private String protocol;
 
     @Column(name = "bytes_sent", nullable = false)
-    private Long bytesSent = 0L;
+    private Long bytesSent;
 
     @Column(name = "bytes_received", nullable = false)
-    private Long bytesReceived = 0L;
+    private Long bytesReceived;
 
     @Column(nullable = false)
-    private Long packets = 0L;
+    private Long packets;
 
+    @Column
     private Double duration;
 
     @Column(nullable = false)
@@ -47,10 +48,6 @@ public class NetworkFlow {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Asset getSourceAsset() {
