@@ -19,6 +19,16 @@ public class AlertController {
 
     @GetMapping
     public ResponseEntity<List<Alert>> getAllAlerts() {
-        return ResponseEntity.ok(alertService.findAll());
+        return ResponseEntity.ok(alertService.getAllAlerts());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Alert> getAlertById(@PathVariable Long id) {
+        return ResponseEntity.ok(alertService.getAlertById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
+        return ResponseEntity.ok(alertService.createAlert(alert));
     }
 }

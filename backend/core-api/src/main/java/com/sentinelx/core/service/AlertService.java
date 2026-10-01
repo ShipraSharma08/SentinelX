@@ -3,7 +3,6 @@ package com.sentinelx.core.service;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.repository.AlertRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,16 +15,16 @@ public class AlertService {
         this.alertRepository = alertRepository;
     }
 
-    @Transactional(readOnly = true)
-    public List<Alert> findAll() {
+    public List<Alert> getAllAlerts() {
         return alertRepository.findAll();
     }
 
-    public Alert save(Alert alert) {
-        return alertRepository.save(alert);
+    public Alert getAlertById(Long id) {
+        return alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Alert not found with id: " + id));
     }
 
-    public Alert update(Alert alert) {
+    public Alert createAlert(Alert alert) {
         return alertRepository.save(alert);
     }
 }

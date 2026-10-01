@@ -12,6 +12,13 @@ public class Asset {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    public Long getId() {
+    return id;
+}
+
+public void setId(Long id) {
+    this.id = id;
+}
 
     @JdbcTypeCode(SqlTypes.INET)
 @Column(name = "ip_address", nullable = false)
@@ -40,10 +47,6 @@ private String macAddress;
     private OffsetDateTime updatedAt;
 
     public Asset() {
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getIpAddress() {

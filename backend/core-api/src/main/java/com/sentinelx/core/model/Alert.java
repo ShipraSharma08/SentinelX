@@ -16,9 +16,8 @@ public class Alert {
     @JoinColumn(name = "security_event_id")
     private SecurityEvent securityEvent;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ml_prediction_id")
-    private MLPrediction mlPrediction;
+    @Column(name = "ml_prediction_id")
+    private Long mlPredictionId;
 
     @Column(nullable = false, length = 255)
     private String title;
@@ -44,11 +43,20 @@ public class Alert {
     @Column(name = "resolved_at")
     private OffsetDateTime resolvedAt;
 
+
+    // No-argument constructor
     public Alert() {
     }
 
+
+    // Getters and Setters
+
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public SecurityEvent getSecurityEvent() {
@@ -59,12 +67,12 @@ public class Alert {
         this.securityEvent = securityEvent;
     }
 
-    public MLPrediction getMlPrediction() {
-        return mlPrediction;
+    public Long getMlPredictionId() {
+        return mlPredictionId;
     }
 
-    public void setMlPrediction(MLPrediction mlPrediction) {
-        this.mlPrediction = mlPrediction;
+    public void setMlPredictionId(Long mlPredictionId) {
+        this.mlPredictionId = mlPredictionId;
     }
 
     public String getTitle() {
