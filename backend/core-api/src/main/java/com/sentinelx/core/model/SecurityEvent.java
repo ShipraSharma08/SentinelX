@@ -2,6 +2,7 @@ package com.sentinelx.core.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -50,11 +51,20 @@ public class SecurityEvent {
     @Column(name = "detected_at", nullable = false)
     private OffsetDateTime detectedAt;
 
+
+    // No-argument constructor
     public SecurityEvent() {
     }
 
+
+    // Getters and Setters
+
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getEventType() {
