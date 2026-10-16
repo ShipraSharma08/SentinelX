@@ -29,19 +29,19 @@ public class NetworkFlow {
     private String protocol;
 
     @Column(name = "bytes_sent", nullable = false)
-    private Long bytesSent;
+    private Long bytesSent = 0L;
 
     @Column(name = "bytes_received", nullable = false)
-    private Long bytesReceived;
+    private Long bytesReceived = 0L;
 
     @Column(nullable = false)
-    private Long packets;
+    private Long packets = 0L;
 
     @Column
     private Double duration;
 
     @Column(nullable = false)
-    private OffsetDateTime timestamp;
+    private OffsetDateTime timestamp = OffsetDateTime.now();
 
     public NetworkFlow() {
     }
