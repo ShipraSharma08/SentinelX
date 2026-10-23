@@ -3,6 +3,10 @@ package com.sentinelx.core.service;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.repository.AlertRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +26,61 @@ public class AlertService {
 
     public List<Alert> getAllAlerts() {
         return alertRepository.findAll();
+    }
+
+    public Page<Alert> getAlerts(
+            String status,
+            String severity,
+            int page,
+            int size
+    ) {
+        if (page < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page must be zero or greater"
+            );
+        }
+
+        if (size < 1 || size > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page size must be between 1 and 100"
+            );
+        }
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasSeverity = severity != null && !severity.isBlank();
+
+        if (hasStatus && hasSeverity) {
+            return alertRepository
+                    .findByStatusIgnoreCaseAndSeverityIgnoreCase(
+                            status.trim(),
+                            severity.trim(),
+                            pageable
+                    );
+        }
+
+        if (hasStatus) {
+            return alertRepository.findByStatusIgnoreCase(
+                    status.trim(),
+                    pageable
+            );
+        }
+
+        if (hasSeverity) {
+            return alertRepository.findBySeverityIgnoreCase(
+                    severity.trim(),
+                    pageable
+            );
+        }
+
+        return alertRepository.findAll(pageable);
     }
 
     public Alert getAlertById(Long id) {

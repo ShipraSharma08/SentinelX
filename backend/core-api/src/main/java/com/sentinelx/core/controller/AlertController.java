@@ -3,6 +3,7 @@ package com.sentinelx.core.controller;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.service.AlertService;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,18 @@ public class AlertController {
     @GetMapping
     public ResponseEntity<List<Alert>> getAllAlerts() {
         return ResponseEntity.ok(alertService.getAllAlerts());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<Alert>> searchAlerts(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String severity,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(
+                alertService.getAlerts(status, severity, page, size)
+        );
     }
 
     @GetMapping("/{id}")
