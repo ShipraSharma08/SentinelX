@@ -37,4 +37,14 @@ public class AlertController {
                 .status(HttpStatus.CREATED)
                 .body(createdAlert);
     }
+
+    @PatchMapping("/{id}/acknowledge")
+    public ResponseEntity<Alert> acknowledgeAlert(@PathVariable Long id) {
+        return ResponseEntity.ok(alertService.acknowledgeAlert(id));
+    }
+
+    @PatchMapping("/{id}/resolve")
+    public ResponseEntity<Alert> resolveAlert(@PathVariable Long id) {
+        return ResponseEntity.ok(alertService.resolveAlert(id));
+    }
 }
