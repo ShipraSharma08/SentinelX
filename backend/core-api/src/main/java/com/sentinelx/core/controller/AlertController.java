@@ -2,6 +2,8 @@ package com.sentinelx.core.controller;
 
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.service.AlertService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +31,10 @@ public class AlertController {
 
     @PostMapping
     public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
-        return ResponseEntity.ok(alertService.createAlert(alert));
+        Alert createdAlert = alertService.createAlert(alert);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(createdAlert);
     }
 }

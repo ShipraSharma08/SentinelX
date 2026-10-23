@@ -43,13 +43,23 @@ public class Alert {
     @Column(name = "resolved_at")
     private OffsetDateTime resolvedAt;
 
-
-    // No-argument constructor
     public Alert() {
     }
 
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = OffsetDateTime.now();
+        }
 
-    // Getters and Setters
+        if (status == null) {
+            status = "OPEN";
+        }
+
+        if (severity == null) {
+            severity = "MEDIUM";
+        }
+    }
 
     public Long getId() {
         return id;

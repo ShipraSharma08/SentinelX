@@ -2,7 +2,9 @@ package com.sentinelx.core.service;
 
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.repository.AlertRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -21,7 +23,10 @@ public class AlertService {
 
     public Alert getAlertById(Long id) {
         return alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alert not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Alert not found with id: " + id
+                ));
     }
 
     public Alert createAlert(Alert alert) {
