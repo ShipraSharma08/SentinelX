@@ -3,6 +3,8 @@ package com.sentinelx.core.controller;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.service.AlertService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +45,9 @@ public class AlertController {
     }
 
     @PostMapping
-    public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
+    public ResponseEntity<Alert> createAlert(
+            @Valid @RequestBody Alert alert
+    ) {
         Alert createdAlert = alertService.createAlert(alert);
 
         return ResponseEntity

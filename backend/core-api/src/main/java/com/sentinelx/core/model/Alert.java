@@ -1,6 +1,12 @@
 package com.sentinelx.core.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -19,15 +25,30 @@ public class Alert {
     @Column(name = "ml_prediction_id")
     private Long mlPredictionId;
 
+    @NotBlank(message = "Alert title is required")
+    @Size(max = 255, message = "Title cannot exceed 255 characters")
     @Column(nullable = false, length = 255)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @NotBlank(message = "Severity is required")
+    @Pattern(
+        regexp = "(?i)LOW|MEDIUM|HIGH|CRITICAL",
+        message = "Severity must be LOW, MEDIUM, HIGH, or CRITICAL"
+    )
     @Column(nullable = false, length = 20)
     private String severity;
 
+    @DecimalMin(
+        value = "0.00",
+        message = "Risk score cannot be below 0"
+    )
+    @DecimalMax(
+        value = "100.00",
+        message = "Risk score cannot exceed 100"
+    )
     @Column(name = "risk_score", precision = 5, scale = 2)
     private BigDecimal riskScore;
 
