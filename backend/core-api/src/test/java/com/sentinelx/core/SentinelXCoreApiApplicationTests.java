@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,7 +21,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -43,6 +43,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void getAllAlertsReturnsOk() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Suspicious Login", "HIGH"
@@ -60,6 +61,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void getAlertByIdReturnsAlert() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Suspicious Login", "HIGH"
@@ -76,6 +78,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void getAlertByIdReturnsNotFoundForMissingAlert()
             throws Exception {
 
@@ -90,6 +93,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void createAlertReturnsCreated() throws Exception {
         Alert createdAlert = createTestAlert(
                 1L, "Suspicious Login", "HIGH"
@@ -119,6 +123,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void getAlertsSearchReturnsPaginatedResults()
             throws Exception {
 
@@ -145,6 +150,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void getAlertsSearchFiltersByStatus() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Open Alert", "HIGH"
@@ -166,6 +172,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void getAlertsSearchFiltersBySeverity() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Critical Alert", "CRITICAL"
@@ -187,6 +194,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void getAlertsSearchFiltersByStatusAndSeverity()
             throws Exception {
 
@@ -215,6 +223,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void createAlertRejectsBlankTitle() throws Exception {
         String requestBody = """
                 {
@@ -233,6 +242,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void createAlertRejectsInvalidSeverity() throws Exception {
         String requestBody = """
                 {
@@ -251,6 +261,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
+    @WithMockUser
     void createAlertRejectsRiskScoreAbove100()
             throws Exception {
 
