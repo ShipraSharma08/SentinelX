@@ -46,3 +46,6 @@ models/*.pth
 *.tmp
 *.temp
 .venv/
+# SentinelX ML data and generated model artifacts
+/ml/data/raw/
+/ml/models/
