@@ -33,7 +33,10 @@ public class SecurityConfig {
                     "/api/auth/register",
                     "/api/auth/login",
                     "/actuator/health",
-                    "/error"
+                    "/error",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**"
                 ).permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(
