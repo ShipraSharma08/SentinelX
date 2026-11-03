@@ -194,9 +194,9 @@ CREATE TABLE ml_predictions (
     model_version VARCHAR(50),
 
     prediction VARCHAR(100) NOT NULL,
-    confidence NUMERIC(5,4),
+    confidence NUMERIC(8,6),
 
-    risk_score NUMERIC(5,2),
+    risk_score NUMERIC(9,6),
 
     predicted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

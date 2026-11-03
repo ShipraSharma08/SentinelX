@@ -25,10 +25,10 @@ public class MLPrediction {
     @Column(name = "prediction", nullable = false, length = 100)
     private String prediction;
 
-    @Column(precision = 5, scale = 4)
+    @Column(precision = 8, scale = 6)
     private BigDecimal confidence;
 
-    @Column(name = "risk_score", precision = 5, scale = 2)
+    @Column(name = "risk_score", precision = 9, scale = 6)
     private BigDecimal riskScore;
 
     @Column(name = "predicted_at", nullable = false)
