@@ -54,3 +54,4 @@ models/*.pth
 
 # Collector generated reports
 /collector/reports/
+backend/core-api/src/main/java/com/sentinelx/core/config/SecurityConfig.java.pre-rbac
