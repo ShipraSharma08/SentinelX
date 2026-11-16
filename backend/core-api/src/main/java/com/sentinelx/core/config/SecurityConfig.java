@@ -1,8 +1,13 @@
+
 package com.sentinelx.core.config;
 
+import com.sentinelx.core.security.CollectorAuthenticationFilter;
 import com.sentinelx.core.security.JwtAuthenticationFilter;
+
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,7 +21,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationFilter jwtAuthenticationFilter)
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            CollectorAuthenticationFilter collectorAuthenticationFilter)
             throws Exception {
 
         http
@@ -29,6 +35,8 @@ public class SecurityConfig {
                 .authenticationEntryPoint(
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
+
+                // Public endpoints
                 .requestMatchers(
                     "/api/auth/register",
                     "/api/auth/login",
@@ -38,11 +46,102 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
-                .anyRequest().authenticated())
+
+                // Collector-only ingestion endpoint
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/collector/flows"
+                ).hasAuthority("COLLECTOR_INGEST")
+
+                // Read-only access
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/dashboard/**",
+                    "/api/alerts/**",
+                    "/api/assets/**",
+                    "/api/incidents/**"
+                ).hasAnyRole(
+                    "ADMIN",
+                    "SOC_ANALYST",
+                    "SECURITY_ENGINEER",
+                    "VIEWER"
+                )
+
+                // Alert creation
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/alerts/**"
+                ).hasAnyRole(
+                    "ADMIN",
+                    "SOC_ANALYST",
+                    "SECURITY_ENGINEER"
+                )
+
+                // Alert acknowledgement and resolution
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/alerts/**"
+                ).hasAnyRole(
+                    "ADMIN",
+                    "SOC_ANALYST",
+                    "SECURITY_ENGINEER"
+                )
+
+                // Asset creation
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/assets/**"
+                ).hasAnyRole(
+                    "ADMIN",
+                    "SECURITY_ENGINEER"
+                )
+
+                // Asset updates
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/assets/**"
+                ).hasAnyRole(
+                    "ADMIN",
+                    "SECURITY_ENGINEER"
+                )
+
+                // ML prediction generation
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/ml/predict"
+                ).hasAnyRole(
+                    "ADMIN",
+                    "SOC_ANALYST",
+                    "SECURITY_ENGINEER"
+                )
+
+                // Deny unlisted API endpoints
+                .requestMatchers("/api/**").denyAll()
+
+                .anyRequest().authenticated()
+            )
             .addFilterBefore(
                 jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class);
+                UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(
+                collectorAuthenticationFilter,
+                JwtAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * Prevent duplicate servlet-container registration.
+     * Collector filter must run only inside Spring Security.
+     */
+    @Bean
+    public FilterRegistrationBean<CollectorAuthenticationFilter>
+    collectorFilterRegistration(CollectorAuthenticationFilter filter) {
+
+        FilterRegistrationBean<CollectorAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(filter);
+
+        registration.setEnabled(false);
+        return registration;
     }
 }

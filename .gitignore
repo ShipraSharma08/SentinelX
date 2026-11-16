@@ -1,16 +1,18 @@
+
 # Python
 __pycache__/
 *.py[cod]
 *.so
 
-# Virtual environment
+# Virtual environments
 .venv/
 venv/
 env/
 
-# Environment variables
+# Environment variables and credentials
 .env
 .env.*
+.sentinelx-test-credentials.json
 
 # IDE
 .vscode/
@@ -45,7 +47,10 @@ models/*.pth
 # Temporary files
 *.tmp
 *.temp
-.venv/
+
 # SentinelX ML data and generated model artifacts
 /ml/data/raw/
 /ml/models/
+
+# Collector generated reports
+/collector/reports/

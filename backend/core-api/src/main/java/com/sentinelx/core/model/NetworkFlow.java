@@ -1,7 +1,9 @@
+
 package com.sentinelx.core.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "network_flows")
@@ -10,6 +12,9 @@ public class NetworkFlow {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "event_id", nullable = false, unique = true, updatable = false)
+    private UUID eventId = UUID.randomUUID();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "source_asset_id", nullable = false)
@@ -48,6 +53,14 @@ public class NetworkFlow {
 
     public Long getId() {
         return id;
+    }
+
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(UUID eventId) {
+        this.eventId = eventId;
     }
 
     public Asset getSourceAsset() {

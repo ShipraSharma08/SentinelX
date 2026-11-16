@@ -1,4 +1,5 @@
-import math
+cd /mnt/d/SentinelX
+sed -n '1,240p' collector/backend/pipeline.pyimport math
 
 import pytest
 

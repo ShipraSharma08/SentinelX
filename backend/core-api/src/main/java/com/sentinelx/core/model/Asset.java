@@ -1,7 +1,11 @@
+
 package com.sentinelx.core.model;
 
 import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
+
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -12,24 +16,21 @@ public class Asset {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    public Long getId() {
-    return id;
-}
-
-public void setId(Long id) {
-    this.id = id;
-}
 
     @JdbcTypeCode(SqlTypes.INET)
-@Column(name = "ip_address", nullable = false)
-private String ipAddress;
+    @Column(name = "ip_address", nullable = false)
+    private String ipAddress;
 
     @Column(length = 255)
     private String hostname;
 
-    @JdbcTypeCode(java.sql.Types.OTHER)
-@Column(name = "mac_address")
-private String macAddress;
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "mac_address", columnDefinition = "macaddr")
+    @ColumnTransformer(
+            read = "mac_address::text",
+            write = "?::macaddr"
+    )
+    private String macAddress;
 
     @Column(name = "asset_type", nullable = false, length = 50)
     private String assetType;
@@ -47,6 +48,14 @@ private String macAddress;
     private OffsetDateTime updatedAt;
 
     public Asset() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getIpAddress() {

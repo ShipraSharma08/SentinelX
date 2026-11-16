@@ -43,7 +43,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void getAllAlertsReturnsOk() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Suspicious Login", "HIGH"
@@ -61,7 +61,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void getAlertByIdReturnsAlert() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Suspicious Login", "HIGH"
@@ -78,7 +78,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void getAlertByIdReturnsNotFoundForMissingAlert()
             throws Exception {
 
@@ -93,7 +93,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void createAlertReturnsCreated() throws Exception {
         Alert createdAlert = createTestAlert(
                 1L, "Suspicious Login", "HIGH"
@@ -123,7 +123,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void getAlertsSearchReturnsPaginatedResults()
             throws Exception {
 
@@ -150,7 +150,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void getAlertsSearchFiltersByStatus() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Open Alert", "HIGH"
@@ -172,7 +172,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void getAlertsSearchFiltersBySeverity() throws Exception {
         Alert alert = createTestAlert(
                 1L, "Critical Alert", "CRITICAL"
@@ -194,7 +194,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void getAlertsSearchFiltersByStatusAndSeverity()
             throws Exception {
 
@@ -223,7 +223,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void createAlertRejectsBlankTitle() throws Exception {
         String requestBody = """
                 {
@@ -242,7 +242,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void createAlertRejectsInvalidSeverity() throws Exception {
         String requestBody = """
                 {
@@ -261,7 +261,7 @@ class SentinelXCoreApiApplicationTests {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "SOC_ANALYST")
     void createAlertRejectsRiskScoreAbove100()
             throws Exception {
 

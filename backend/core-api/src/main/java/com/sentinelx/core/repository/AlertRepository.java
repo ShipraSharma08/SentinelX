@@ -1,9 +1,12 @@
+
 package com.sentinelx.core.repository;
 
 import com.sentinelx.core.model.Alert;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
@@ -22,4 +25,12 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
             String severity,
             Pageable pageable
     );
+
+    long countByStatusIgnoreCase(String status);
+
+    long countBySeverityIgnoreCase(String severity);
+
+    List<Alert> findTop10ByOrderByCreatedAtDesc();
+
+    boolean existsByMlPredictionId(Long mlPredictionId);
 }
