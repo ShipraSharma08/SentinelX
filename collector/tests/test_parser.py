@@ -1,4 +1,4 @@
-
+from scapy.layers.l2 import Ether
 from scapy.layers.inet import ICMP, IP, TCP, UDP
 from scapy.layers.inet6 import IPv6, ICMPv6EchoRequest
 from scapy.packet import Raw
@@ -82,6 +82,29 @@ def test_parse_ipv6_icmp_packet():
 
     assert record is not None
     assert record.protocol == "ICMP"
+
+
+def test_parse_ethernet_udp_payload_length_excludes_ethernet_header():
+    payload = b"x" * 188
+
+    packet = (
+        Ether()
+        / IP(src="192.168.1.10", dst="192.168.1.20")
+        / UDP(sport=123, dport=123)
+        / Raw(load=payload)
+    )
+
+    record = parse_packet(packet)
+
+    assert record is not None
+    assert record.protocol == "UDP"
+
+    # Packet length should represent the IP packet,
+    # not the complete Ethernet frame.
+    assert record.packet_length == len(packet[IP])
+
+    # Payload length must exclude Ethernet, IP and UDP headers.
+    assert record.payload_length == len(payload)
 
 
 def test_unsupported_packet_returns_none():

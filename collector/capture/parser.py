@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from scapy.layers.inet import ICMP, IP, TCP, UDP
@@ -75,7 +74,10 @@ def parse_packet(packet: Packet) -> PacketRecord | None:
         else:
             protocol = "OTHER"
 
-        packet_length = int(len(packet))
+        # Use the IP/IPv6 packet length instead of the complete
+        # captured frame length. This excludes Ethernet headers.
+        packet_length = int(len(network_layer))
+
         header_length = ip_header_length + transport_header_length
 
         if header_length > packet_length:
