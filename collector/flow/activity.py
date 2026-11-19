@@ -23,13 +23,11 @@ class FlowActivityTracker:
 
     subflow_count: int = 0
 
-    # Current subflow counters.
     subflow_forward_packets: int = 0
     subflow_backward_packets: int = 0
     subflow_forward_bytes: int = 0
     subflow_backward_bytes: int = 0
 
-    # Accumulated counters from completed subflows.
     completed_forward_packets: int = 0
     completed_backward_packets: int = 0
     completed_forward_bytes: int = 0
@@ -105,7 +103,6 @@ class FlowActivityTracker:
             self.active_start_time = timestamp
             self.active_end_time = timestamp
             self.subflow_last_packet_time = timestamp
-            self.subflow_count = 1
 
         else:
             assert self.active_end_time is not None
@@ -165,6 +162,9 @@ class FlowActivityTracker:
 
             self._finish_subflow()
 
+            if self.subflow_count == 0:
+                self.subflow_count = 1
+
         self.finalized = True
 
     def snapshot(self) -> dict:
@@ -185,14 +185,10 @@ class FlowActivityTracker:
 
         return {
             "subflow_count": count,
-
-            # Current subflow counters retained for compatibility.
             "subflow_forward_packets": self.subflow_forward_packets,
             "subflow_backward_packets": self.subflow_backward_packets,
             "subflow_forward_bytes": self.subflow_forward_bytes,
             "subflow_backward_bytes": self.subflow_backward_bytes,
-
-            # Average counters across all subflows.
             "average_subflow_forward_packets": (
                 total_forward_packets / count if count else 0.0
             ),
@@ -205,7 +201,6 @@ class FlowActivityTracker:
             "average_subflow_backward_bytes": (
                 total_backward_bytes / count if count else 0.0
             ),
-
             "active": self.active_durations.snapshot(),
             "idle": self.idle_durations.snapshot(),
             "active_start_time": self.active_start_time,

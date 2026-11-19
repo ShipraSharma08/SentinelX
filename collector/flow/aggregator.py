@@ -250,20 +250,14 @@ class FlowAccumulator:
             if packet.protocol == "TCP" and payload_length > 0:
                 self.act_data_pkt_fwd += 1
 
-            if packet.protocol == "TCP":
-                segment_header_length = (
-                    packet.transport_header_length
-                    or packet.header_length
-                )
-
-                if segment_header_length > 0:
-                    if self.min_seg_size_forward is None:
-                        self.min_seg_size_forward = segment_header_length
-                    else:
-                        self.min_seg_size_forward = min(
-                            self.min_seg_size_forward,
-                            segment_header_length,
-                        )
+            if packet.header_length > 0:
+                if self.min_seg_size_forward is None:
+                    self.min_seg_size_forward = packet.header_length
+                else:
+                    self.min_seg_size_forward = min(
+                        self.min_seg_size_forward,
+                        packet.header_length,
+                    )
 
         else:
             self.backward_packets += 1
@@ -285,7 +279,10 @@ class FlowAccumulator:
 
             self.last_backward_seen = packet.timestamp
 
-            if packet.protocol == "TCP":
+            if (
+                packet.protocol == "TCP"
+                and self.init_win_bytes_backward is None
+            ):
                 self.init_win_bytes_backward = packet.tcp_window
 
         for flag in packet.tcp_flags:

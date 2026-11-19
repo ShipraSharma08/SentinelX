@@ -156,6 +156,11 @@ class NetworkFlowPipeline:
             "prediction": prediction.prediction,
             "attack_probability": prediction.attack_probability,
             "model": prediction.model,
+            **(
+                {"features": features}
+                if prediction.prediction == "ATTACK"
+                else {}
+            ),
             "persistence": persistence,
         }
 

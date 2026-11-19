@@ -433,3 +433,54 @@ def test_ml_failure_does_not_call_backend(ml_client):
     assert status["predictions_failed"] == 1
     assert status["persistence_succeeded"] == 0
     assert status["persistence_failed"] == 0
+
+
+def test_successful_attack_prediction_returns_70_diagnostic_features(
+    pipeline,
+    ml_client,
+):
+    ml_client.predict.return_value = MLPrediction(
+        prediction="ATTACK",
+        attack_probability=0.95,
+        model="web_coverage_candidate",
+    )
+
+    first = make_packet(
+        "192.168.1.10", "192.168.1.20",
+        50000, 80, 1.0, "S", b"hello",
+    )
+    second = make_packet(
+        "192.168.1.20", "192.168.1.10",
+        80, 50000, 1.5, "PA", b"world",
+    )
+
+    pipeline.process_packet(first)
+    pipeline.process_packet(second)
+    result = pipeline.flush_all()[0]
+
+    assert result["status"] == "success"
+    assert result["prediction"] == "ATTACK"
+    assert result["attack_probability"] == 0.95
+    assert len(result["features"]) == 70
+    assert all(
+        isinstance(value, (int, float))
+        for value in result["features"].values()
+    )
+
+
+def test_successful_benign_prediction_omits_diagnostic_features(pipeline):
+    first = make_packet(
+        "192.168.1.10", "192.168.1.20",
+        50000, 80, 1.0, "S", b"hello",
+    )
+    second = make_packet(
+        "192.168.1.20", "192.168.1.10",
+        80, 50000, 1.5, "PA", b"world",
+    )
+
+    pipeline.process_packet(first)
+    pipeline.process_packet(second)
+    result = pipeline.flush_all()[0]
+
+    assert result["prediction"] == "BENIGN"
+    assert "features" not in result

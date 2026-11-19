@@ -152,6 +152,92 @@ def test_subflow_features(features):
     assert features["Subflow Bwd Bytes"] == 80.0
 
 
+def test_tcp_flag_features_return_binary_indicators_for_multiple_packets():
+    aggregator = FlowAggregator()
+
+    # Ingest multiple packets with repeated ACK, PSH, SYN, FIN, RST, ECE flags
+    packets = [
+        PacketRecord(
+            source_ip="192.168.1.10",
+            destination_ip="192.168.1.20",
+            source_port=50000,
+            destination_port=80,
+            protocol="TCP",
+            packet_length=100,
+            timestamp=1.0,
+            tcp_flags=frozenset({"SYN", "ACK"}),
+            tcp_window=64240,
+            header_length=40,
+            payload_length=60,
+            transport_header_length=20,
+        ),
+        PacketRecord(
+            source_ip="192.168.1.10",
+            destination_ip="192.168.1.20",
+            source_port=50000,
+            destination_port=80,
+            protocol="TCP",
+            packet_length=100,
+            timestamp=1.1,
+            tcp_flags=frozenset({"ACK", "PSH"}),
+            tcp_window=64240,
+            header_length=40,
+            payload_length=60,
+            transport_header_length=20,
+        ),
+        PacketRecord(
+            source_ip="192.168.1.20",
+            destination_ip="192.168.1.10",
+            source_port=80,
+            destination_port=50000,
+            protocol="TCP",
+            packet_length=120,
+            timestamp=1.2,
+            tcp_flags=frozenset({"ACK", "PSH", "FIN"}),
+            tcp_window=65535,
+            header_length=40,
+            payload_length=80,
+            transport_header_length=20,
+        ),
+        PacketRecord(
+            source_ip="192.168.1.10",
+            destination_ip="192.168.1.20",
+            source_port=50000,
+            destination_port=80,
+            protocol="TCP",
+            packet_length=100,
+            timestamp=1.3,
+            tcp_flags=frozenset({"ACK", "RST", "ECE"}),
+            tcp_window=64240,
+            header_length=40,
+            payload_length=60,
+            transport_header_length=20,
+        ),
+    ]
+
+    for packet in packets:
+        aggregator.ingest(packet)
+
+    records = aggregator.flush_all()
+    assert len(records) == 1
+    flow_features = extract_features(records[0])
+
+    # Multiple occurrences must produce 1.0 (binary presence), not cumulative count
+    assert flow_features["ACK Flag Count"] == 1.0
+    assert flow_features["PSH Flag Count"] == 1.0
+    assert flow_features["SYN Flag Count"] == 1.0
+    assert flow_features["FIN Flag Count"] == 1.0
+    assert flow_features["RST Flag Count"] == 1.0
+    assert flow_features["ECE Flag Count"] == 1.0
+
+    # Absent flags must produce 0.0
+    assert flow_features["URG Flag Count"] == 0.0
+    assert flow_features["CWE Flag Count"] == 0.0
+
+    # Directional flags follow binary semantics
+    assert flow_features["Fwd PSH Flags"] == 1.0
+    assert flow_features["Fwd URG Flags"] == 0.0
+
 def test_missing_required_field_is_rejected(flow_record):
     del flow_record["destination_port"]
 

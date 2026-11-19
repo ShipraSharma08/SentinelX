@@ -101,7 +101,7 @@ def test_scapy_packets_are_parsed_and_aggregated_into_one_bidirectional_flow():
     assert record["backward_tcp_flags"]["ACK"] == 1
 
     assert record["act_data_pkt_fwd"] == 1
-    assert record["min_seg_size_forward"] == 20
+    assert record["min_seg_size_forward"] == 40
 
     assert record["duration"] == 1.0
     assert record["flow_iat"]["count"] == 1

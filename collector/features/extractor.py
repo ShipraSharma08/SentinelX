@@ -151,10 +151,11 @@ def _flag(flow: Mapping[str, Any], name: str) -> float:
     if not isinstance(flags, Mapping):
         raise ValueError("Flow record has invalid tcp_flags")
 
-    return _number(
+    count = _number(
         flags.get(name, 0),
         f"tcp_flags.{name}",
     )
+    return 1.0 if count > 0 else 0.0
 
 
 def _activity_stat(
@@ -182,10 +183,11 @@ def _directional_flag(
     if not isinstance(flags, Mapping):
         raise ValueError(f"Flow record has invalid {key}")
 
-    return _number(
+    count = _number(
         flags.get(name, 0),
         f"{key}.{name}",
     )
+    return 1.0 if count > 0 else 0.0
 
 
 def extract_features(

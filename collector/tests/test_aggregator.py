@@ -165,6 +165,111 @@ def test_initial_tcp_windows_are_recorded():
     assert record["init_win_bytes_backward"] == 0
 
 
+def test_initial_tcp_window_backward_is_not_overwritten_by_subsequent_packets():
+    aggregator = FlowAggregator()
+
+    # Forward SYN packet with window 64240
+    aggregator.ingest(PacketRecord(
+        source_ip="192.168.1.10",
+        destination_ip="192.168.1.20",
+        source_port=50000,
+        destination_port=443,
+        protocol="TCP",
+        packet_length=74,
+        timestamp=1.0,
+        tcp_flags=frozenset({"SYN"}),
+        tcp_window=64240,
+    ))
+
+    # First backward packet (e.g. SYN-ACK) with initial window 65535
+    aggregator.ingest(PacketRecord(
+        source_ip="192.168.1.20",
+        destination_ip="192.168.1.10",
+        source_port=443,
+        destination_port=50000,
+        protocol="TCP",
+        packet_length=74,
+        timestamp=1.05,
+        tcp_flags=frozenset({"SYN", "ACK"}),
+        tcp_window=65535,
+    ))
+
+    # Forward ACK with window update (should not overwrite initial forward window)
+    aggregator.ingest(PacketRecord(
+        source_ip="192.168.1.10",
+        destination_ip="192.168.1.20",
+        source_port=50000,
+        destination_port=443,
+        protocol="TCP",
+        packet_length=66,
+        timestamp=1.06,
+        tcp_flags=frozenset({"ACK"}),
+        tcp_window=1024,
+    ))
+
+    # Subsequent backward data / ACK packets with different window sizes (e.g. 500)
+    aggregator.ingest(PacketRecord(
+        source_ip="192.168.1.20",
+        destination_ip="192.168.1.10",
+        source_port=443,
+        destination_port=50000,
+        protocol="TCP",
+        packet_length=1500,
+        timestamp=1.1,
+        tcp_flags=frozenset({"ACK"}),
+        tcp_window=500,
+    ))
+
+    # Subsequent backward teardown packet with small window (realistic case: window 16)
+    aggregator.ingest(PacketRecord(
+        source_ip="192.168.1.20",
+        destination_ip="192.168.1.10",
+        source_port=443,
+        destination_port=50000,
+        protocol="TCP",
+        packet_length=66,
+        timestamp=1.2,
+        tcp_flags=frozenset({"FIN", "ACK"}),
+        tcp_window=16,
+    ))
+
+    record = aggregator.flush_all()[0]
+
+    # Forward window must remain 64240 (not overwritten by 1024)
+    assert record["init_win_bytes_forward"] == 64240
+
+    # Backward window must remain 65535 (first packet window, not overwritten by 500 or 16)
+    assert record["init_win_bytes_backward"] == 65535
+
+
+def test_non_tcp_initial_windows_remain_none():
+    aggregator = FlowAggregator()
+
+    aggregator.ingest(PacketRecord(
+        source_ip="192.168.1.10",
+        destination_ip="192.168.1.20",
+        source_port=50000,
+        destination_port=53,
+        protocol="UDP",
+        packet_length=100,
+        timestamp=1.0,
+    ))
+    aggregator.ingest(PacketRecord(
+        source_ip="192.168.1.20",
+        destination_ip="192.168.1.10",
+        source_port=53,
+        destination_port=50000,
+        protocol="UDP",
+        packet_length=100,
+        timestamp=1.1,
+    ))
+
+    record = aggregator.flush_all()[0]
+
+    assert record["init_win_bytes_forward"] is None
+    assert record["init_win_bytes_backward"] is None
+
+
 def test_forward_data_packet_count():
     aggregator = FlowAggregator()
 
@@ -332,3 +437,57 @@ def test_invalid_active_flow_capacity_is_rejected():
 
     with pytest.raises(ValueError):
         FlowAggregator(max_active_flows=1.5)
+
+
+def test_min_seg_size_forward_tcp_regression():
+    aggregator = FlowAggregator()
+
+    packet1 = PacketRecord(
+        source_ip="192.168.1.10",
+        destination_ip="192.168.1.20",
+        source_port=50000,
+        destination_port=80,
+        protocol="TCP",
+        packet_length=100,
+        timestamp=1.0,
+        header_length=40,
+        payload_length=60,
+    )
+    packet2 = PacketRecord(
+        source_ip="192.168.1.10",
+        destination_ip="192.168.1.20",
+        source_port=50000,
+        destination_port=80,
+        protocol="TCP",
+        packet_length=100,
+        timestamp=2.0,
+        header_length=32,
+        payload_length=68,
+    )
+
+    aggregator.ingest(packet1)
+    aggregator.ingest(packet2)
+
+    record = aggregator.flush_all()[0]
+    assert record["min_seg_size_forward"] == 32
+
+
+def test_min_seg_size_forward_udp_regression():
+    aggregator = FlowAggregator()
+
+    packet = PacketRecord(
+        source_ip="192.168.1.10",
+        destination_ip="192.168.1.20",
+        source_port=50000,
+        destination_port=53,
+        protocol="UDP",
+        packet_length=100,
+        timestamp=1.0,
+        header_length=28,
+        payload_length=72,
+    )
+
+    aggregator.ingest(packet)
+
+    record = aggregator.flush_all()[0]
+    assert record["min_seg_size_forward"] == 28
