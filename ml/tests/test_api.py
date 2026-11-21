@@ -110,3 +110,26 @@ def test_predict_rejects_missing_features_field(client):
     response = client.post("/predict", json={})
 
     assert response.status_code == 422
+
+
+def test_predict_logs_unexpected_exception(client, monkeypatch):
+    logged = []
+
+    def raise_unexpected_error(features):
+        raise RuntimeError("database connection failure")
+
+    monkeypatch.setattr(main, "predict_flow", raise_unexpected_error)
+    monkeypatch.setattr(
+        main.logger,
+        "exception",
+        lambda msg, exc: logged.append((msg, str(exc))),
+    )
+
+    response = client.post(
+        "/predict", json={"features": {"Flow Duration": 1.0}}
+    )
+
+    assert response.status_code == 500
+    assert len(logged) == 1
+    assert "Prediction failed unexpectedly" in logged[0][0]
+    assert "database connection failure" in logged[0][1]

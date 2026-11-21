@@ -14,12 +14,12 @@ export interface AuthResponse {
 
 export type AuthSession = AuthResponse
 
-interface LoginRequest {
+export interface LoginRequest {
   usernameOrEmail: string
   password: string
 }
 
-interface RegisterRequest {
+export interface RegisterRequest {
   username: string
   email: string
   password: string
@@ -46,6 +46,18 @@ export interface RecentAlert {
   status: string
   mlPredictionId: number | null
   createdAt: string
+  acknowledgedAt?: string | null
+  resolvedAt?: string | null
+}
+
+export type AlertItem = RecentAlert
+
+export interface PageResponse<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
 }
 
 export interface RecentPrediction {
@@ -70,6 +82,45 @@ export interface RecentNetworkFlow {
   packets: number | null
   duration: number | null
   timestamp: string
+}
+
+export interface AssetItem {
+  id: number
+  ipAddress: string
+  hostname: string | null
+  macAddress: string | null
+  assetType: string
+  operatingSystem: string | null
+  criticality: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IncidentItem {
+  id: number
+  title: string
+  description: string | null
+  severity: string
+  status: string
+  assignedTo: {
+    id: number
+    username: string
+    email: string
+  } | null
+  detectedAt: string
+  acknowledgedAt: string | null
+  resolvedAt: string | null
+  resolutionNotes: string | null
+}
+
+export interface PredictionResult {
+  id: number
+  prediction: string
+  model: string
+  modelVersion: string
+  confidence: number
+  riskScore: number
+  predictedAt: string
 }
 
 const API_BASE = '/api'
@@ -159,6 +210,36 @@ function getAuthenticated<T>(
   })
 }
 
+function patchAuthenticated<T>(
+  path: string,
+  session: AuthSession,
+  body?: unknown,
+): Promise<T> {
+  return request<T>(path, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `${session.tokenType} ${session.accessToken}`,
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  })
+}
+
+function postAuthenticated<T>(
+  path: string,
+  session: AuthSession,
+  body: unknown,
+): Promise<T> {
+  return request<T>(path, {
+    method: 'POST',
+    headers: {
+      Authorization: `${session.tokenType} ${session.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+}
+
 export const authApi = {
   login(request: LoginRequest): Promise<AuthResponse> {
     return post<AuthResponse>('/auth/login', request)
@@ -196,6 +277,75 @@ export const dashboardApi = {
       '/dashboard/recent-flows',
       session,
     )
+  },
+}
+
+export const alertsApi = {
+  getAll(session: AuthSession): Promise<AlertItem[]> {
+    return getAuthenticated<AlertItem[]>('/alerts', session)
+  },
+
+  search(
+    session: AuthSession,
+    params: {
+      status?: string
+      severity?: string
+      page?: number
+      size?: number
+    } = {},
+  ): Promise<PageResponse<AlertItem>> {
+    const query = new URLSearchParams()
+    if (params.status && params.status !== 'ALL') query.set('status', params.status)
+    if (params.severity && params.severity !== 'ALL') query.set('severity', params.severity)
+    if (params.page != null) query.set('page', String(params.page))
+    if (params.size != null) query.set('size', String(params.size))
+
+    const qs = query.toString()
+    return getAuthenticated<PageResponse<AlertItem>>(
+      `/alerts/search${qs ? `?${qs}` : ''}`,
+      session,
+    )
+  },
+
+  getById(session: AuthSession, id: number): Promise<AlertItem> {
+    return getAuthenticated<AlertItem>(`/alerts/${id}`, session)
+  },
+
+  acknowledge(session: AuthSession, id: number): Promise<AlertItem> {
+    return patchAuthenticated<AlertItem>(`/alerts/${id}/acknowledge`, session)
+  },
+
+  resolve(session: AuthSession, id: number): Promise<AlertItem> {
+    return patchAuthenticated<AlertItem>(`/alerts/${id}/resolve`, session)
+  },
+}
+
+export const assetsApi = {
+  getAll(session: AuthSession): Promise<AssetItem[]> {
+    return getAuthenticated<AssetItem[]>('/assets', session)
+  },
+
+  getById(session: AuthSession, id: number): Promise<AssetItem> {
+    return getAuthenticated<AssetItem>(`/assets/${id}`, session)
+  },
+
+  getByIp(session: AuthSession, ipAddress: string): Promise<AssetItem> {
+    return getAuthenticated<AssetItem>(`/assets/ip/${encodeURIComponent(ipAddress)}`, session)
+  },
+}
+
+export const incidentsApi = {
+  getAll(session: AuthSession): Promise<IncidentItem[]> {
+    return getAuthenticated<IncidentItem[]>('/incidents', session)
+  },
+}
+
+export const mlApi = {
+  predict(
+    session: AuthSession,
+    features: Record<string, number>,
+  ): Promise<PredictionResult> {
+    return postAuthenticated<PredictionResult>('/ml/predict', session, { features })
   },
 }
 

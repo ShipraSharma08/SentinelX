@@ -1,5 +1,6 @@
 package com.sentinelx.core.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
@@ -17,6 +18,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -60,6 +62,7 @@ public class User {
         this.email = email;
     }
 
+    @JsonIgnore
     public String getPasswordHash() {
         return passwordHash;
     }

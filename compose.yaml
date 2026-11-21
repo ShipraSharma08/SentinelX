@@ -1,0 +1,59 @@
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: sentinelx-postgres-test
+    restart: unless-stopped
+    env_file:
+      - /home/acer/SentinelX-backups/docker-postgres.env
+    environment:
+      POSTGRES_DB: sentinelx
+      POSTGRES_USER: sentinelx_app
+    ports:
+      - "5433:5432"
+    volumes:
+      - sentinelx_pgdata:/var/lib/postgresql
+    networks:
+      - sentinelx-network
+
+  ml:
+    image: sentinelx-ml:latest
+    container_name: sentinelx-ml-test
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - sentinelx-network
+
+  backend:
+    image: sentinelx-backend:latest
+    container_name: sentinelx-backend-test
+    restart: unless-stopped
+    env_file:
+      - /home/acer/SentinelX-backups/backend.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - ml
+    networks:
+      - sentinelx-network
+
+  frontend:
+    image: sentinelx-frontend:latest
+    container_name: sentinelx-frontend-test
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - sentinelx-network
+
+volumes:
+  sentinelx_pgdata:
+    external: true
+
+networks:
+  sentinelx-network:
+    external: true

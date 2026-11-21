@@ -35,10 +35,17 @@ def _print_diagnostics(results: list[dict[str, Any]]) -> None:
 def _print_inference_failures(results: list[dict[str, Any]]) -> None:
     """Print inference_failed results and their error messages to stderr."""
     for result in results:
-        if result.get("status") == "inference_failed":
+        status = result.get("status")
+        if status == "inference_failed":
             error = result.get("error", "Unknown inference error")
             print(
                 f"Inference failed: {error}",
+                file=sys.stderr,
+            )
+        elif status == "feature_extraction_failed":
+            error = result.get("error", "Unknown feature extraction error")
+            print(
+                f"Feature extraction failed: {error}",
                 file=sys.stderr,
             )
 
@@ -110,10 +117,17 @@ def process_live_capture(
             now = time.monotonic()
 
             if now - last_flush >= flush_interval:
-                results = flow_pipeline.flush_expired(time.time())
-                _print_inference_failures(results)
-                if diagnostics:
-                    _print_diagnostics(results)
+                try:
+                    results = flow_pipeline.flush_expired(time.time())
+                    _print_inference_failures(results)
+                    if diagnostics:
+                        _print_diagnostics(results)
+                except (ValueError, RuntimeError) as exc:
+                    processing_errors += 1
+                    print(
+                        f"Flow flush error: {exc}",
+                        file=sys.stderr,
+                    )
                 last_flush = now
 
     except KeyboardInterrupt:
@@ -121,10 +135,17 @@ def process_live_capture(
 
     finally:
         # Finalize all active flows before reporting shutdown.
-        results = flow_pipeline.flush_all()
-        _print_inference_failures(results)
-        if diagnostics:
-            _print_diagnostics(results)
+        try:
+            results = flow_pipeline.flush_all()
+            _print_inference_failures(results)
+            if diagnostics:
+                _print_diagnostics(results)
+        except (ValueError, RuntimeError) as exc:
+            processing_errors += 1
+            print(
+                f"Shutdown flush error: {exc}",
+                file=sys.stderr,
+            )
 
     status = flow_pipeline.get_status()
 

@@ -11,6 +11,7 @@ def parse_packet(packet: Packet) -> PacketRecord | None:
     """Convert a Scapy packet into metadata-only flow information."""
 
     try:
+        # Network layer
         if IP in packet:
             network_layer = packet[IP]
             source_ip = network_layer.src
@@ -26,19 +27,33 @@ def parse_packet(packet: Packet) -> PacketRecord | None:
         else:
             return None
 
+        packet_length = int(len(network_layer))
+
+        if packet_length <= 0:
+            return None
+
+        # Defaults
         source_port = 0
         destination_port = 0
+
         tcp_flags: frozenset[str] = frozenset()
         tcp_window = 0
-        transport_header_length = 0
 
+        transport_header_length = 0
+        transport_layer = None
+
+        # TCP
         if TCP in packet:
-            transport = packet[TCP]
+            transport_layer = packet[TCP]
             protocol = "TCP"
-            source_port = int(transport.sport)
-            destination_port = int(transport.dport)
-            tcp_window = int(transport.window)
-            transport_header_length = int(transport.dataofs or 5) * 4
+
+            source_port = int(transport_layer.sport)
+            destination_port = int(transport_layer.dport)
+            tcp_window = int(transport_layer.window)
+
+            transport_header_length = (
+                int(transport_layer.dataofs or 5) * 4
+            )
 
             flag_names = {
                 "F": "FIN",
@@ -54,37 +69,70 @@ def parse_packet(packet: Packet) -> PacketRecord | None:
             tcp_flags = frozenset(
                 name
                 for flag, name in flag_names.items()
-                if flag in str(transport.flags)
+                if flag in str(transport_layer.flags)
             )
 
+        # UDP
         elif UDP in packet:
-            transport = packet[UDP]
+            transport_layer = packet[UDP]
             protocol = "UDP"
-            source_port = int(transport.sport)
-            destination_port = int(transport.dport)
+
+            source_port = int(transport_layer.sport)
+            destination_port = int(transport_layer.dport)
+
             transport_header_length = 8
 
+        # ICMP / ICMPv6
         elif ICMP in packet or any(
             layer.__name__.startswith("ICMPv6")
             for layer in packet.layers()
         ):
             protocol = "ICMP"
+
+            if ICMP in packet:
+                transport_layer = packet[ICMP]
+            else:
+                icmpv6_layer_class = next(
+                    layer
+                    for layer in packet.layers()
+                    if layer.__name__.startswith("ICMPv6")
+                )
+
+                transport_layer = packet.getlayer(
+                    icmpv6_layer_class
+                )
+
             transport_header_length = 8
 
+        # Other protocols
         else:
             protocol = "OTHER"
 
-        # Use the IP/IPv6 packet length instead of the complete
-        # captured frame length. This excludes Ethernet headers.
-        packet_length = int(len(network_layer))
+        # Header and payload lengths
+        if transport_layer is not None:
+            payload_length = int(len(transport_layer.payload))
 
-        header_length = ip_header_length + transport_header_length
+            # Accounts for IPv6 extension headers as well.
+            header_length = packet_length - payload_length
 
-        if header_length > packet_length:
+        else:
+            header_length = ip_header_length
+
+            if header_length > packet_length:
+                return None
+
+            payload_length = packet_length - header_length
+
+        # Validate lengths
+        if (
+            payload_length < 0
+            or header_length < 0
+            or transport_header_length > header_length
+            or transport_header_length < 0
+        ):
             return None
 
-        payload_length = packet_length - header_length
-
+        # Create packet record
         return PacketRecord(
             source_ip=source_ip,
             destination_ip=destination_ip,
@@ -100,5 +148,11 @@ def parse_packet(packet: Packet) -> PacketRecord | None:
             transport_header_length=transport_header_length,
         )
 
-    except (AttributeError, TypeError, ValueError, OverflowError):
+    except (
+        AttributeError,
+        TypeError,
+        ValueError,
+        OverflowError,
+        StopIteration,
+    ):
         return None

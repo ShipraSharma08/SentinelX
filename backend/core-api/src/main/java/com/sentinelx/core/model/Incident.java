@@ -1,5 +1,6 @@
 package com.sentinelx.core.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
@@ -23,6 +24,7 @@ public class Incident {
     @Column(nullable = false, length = 30)
     private String status;
 
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to")
     private User assignedTo;

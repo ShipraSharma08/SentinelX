@@ -14,7 +14,7 @@ from collector.flow.statistics import StreamingStatistics
 Protocol = Literal["TCP", "UDP", "ICMP", "OTHER"]
 
 TCP_FLAG_NAMES = {
-    "FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR"
+    "FIN", "SYN", "RST", "PSH", "ACK", "URG", "ECE", "CWR", "CWE"
 }
 
 
@@ -73,7 +73,10 @@ class PacketRecord:
         if self.header_length + self.payload_length > self.packet_length:
             raise ValueError("Header and payload exceed packet length")
 
-        normalized_flags = {flag.upper() for flag in self.tcp_flags}
+        normalized_flags = {
+            "CWR" if flag.upper() == "CWE" else flag.upper()
+            for flag in self.tcp_flags
+        }
 
         if not normalized_flags.issubset(TCP_FLAG_NAMES):
             raise ValueError("Unsupported TCP flag")
@@ -447,7 +450,7 @@ class FlowAggregator:
             flow is not None
             and packet.timestamp - flow.first_seen > self.flow_timeout
         ):
-            if flow.total_packets > 1:
+            if flow.total_packets > 0:
                 expired.append(flow.to_record())
 
             del self.active_flows[key]

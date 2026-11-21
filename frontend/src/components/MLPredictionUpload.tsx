@@ -1,6 +1,6 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
-import type { AuthSession } from '../lib/api'
+import { mlApi, ApiError, type AuthSession, type PredictionResult } from '../lib/api'
 import './MLPredictionUpload.css'
 
 const MODEL_FEATURES = [
@@ -75,16 +75,6 @@ const MODEL_FEATURES = [
   'Idle Max',
   'Idle Min',
 ] as const
-
-interface PredictionResult {
-  id: number
-  prediction: string
-  model: string
-  modelVersion: string
-  confidence: number
-  riskScore: number
-  predictedAt: string
-}
 
 function parseCsvLine(line: string): string[] {
   const values: string[] = []
@@ -342,69 +332,15 @@ export default function MLPredictionUpload({
           ? values[labelIndex]?.trim() || 'Not available'
           : 'Not available'
 
-      const response = await fetch('/api/ml/predict', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: `${session.tokenType} ${session.accessToken}`,
-        },
-        body: JSON.stringify({ features }),
-      })
-
-      const responseText = await response.text()
-
-      let payload: unknown
-
-      try {
-        payload = responseText ? JSON.parse(responseText) : null
-      } catch {
-        payload = null
-      }
-
-      if (response.status === 401) {
-        onUnauthorized()
-        return
-      }
-
-      if (!response.ok) {
-        const details =
-          payload && typeof payload === 'object'
-            ? (payload as Record<string, unknown>)
-            : {}
-
-        const message =
-          details.message ??
-          details.detail ??
-          details.error ??
-          details.title
-
-        throw new Error(
-          typeof message === 'string'
-            ? message
-            : `Prediction request failed (${response.status}).`,
-        )
-      }
-
-      if (!payload || typeof payload !== 'object') {
-        throw new Error('The backend returned an invalid prediction response.')
-      }
-
-      const prediction = payload as PredictionResult
-
-      if (
-        typeof prediction.id !== 'number' ||
-        !['ATTACK', 'BENIGN'].includes(prediction.prediction) ||
-        typeof prediction.confidence !== 'number' ||
-        typeof prediction.riskScore !== 'number'
-      ) {
-        throw new Error('The backend response is missing prediction fields.')
-      }
-
+      const prediction = await mlApi.predict(session, features)
       setResult(prediction)
       setSourceLabel(csvLabel)
       onSaved()
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
       setError(err instanceof Error ? err.message : 'Prediction failed.')
     } finally {
       setLoading(false)

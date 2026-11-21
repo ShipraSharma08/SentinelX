@@ -1,6 +1,10 @@
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import ICMP, IP, TCP, UDP
-from scapy.layers.inet6 import IPv6, ICMPv6EchoRequest
+from scapy.layers.inet6 import (
+    IPv6,
+    IPv6ExtHdrHopByHop,
+    ICMPv6EchoRequest,
+)
 from scapy.packet import Raw
 
 from collector.capture.parser import parse_packet
@@ -70,6 +74,35 @@ def test_parse_ipv6_tcp_packet():
     assert record.source_ip == "2001:db8::1"
     assert record.destination_ip == "2001:db8::2"
     assert "ACK" in record.tcp_flags
+
+
+def test_parse_ipv6_tcp_with_extension_header():
+    payload = b"ipv6-extension-test"
+
+    packet = (
+        IPv6(src="2001:db8::1", dst="2001:db8::2")
+        / IPv6ExtHdrHopByHop()
+        / TCP(sport=50000, dport=443, flags="A")
+        / Raw(load=payload)
+    )
+
+    record = parse_packet(packet)
+
+    assert record is not None
+    assert record.protocol == "TCP"
+    assert record.source_ip == "2001:db8::1"
+    assert record.destination_ip == "2001:db8::2"
+    assert record.source_port == 50000
+    assert record.destination_port == 443
+
+    # Payload must only contain application payload.
+    assert record.payload_length == len(payload)
+
+    # Header length must include IPv6, extension and TCP headers.
+    assert record.header_length > 40 + 20
+
+    # Header + payload must account for the entire IP packet.
+    assert record.header_length + record.payload_length == record.packet_length
 
 
 def test_parse_ipv6_icmp_packet():

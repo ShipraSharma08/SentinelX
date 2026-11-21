@@ -174,3 +174,73 @@ def test_live_capture_logs_inference_failures_to_stderr(monkeypatch, capsys):
 
     captured = capsys.readouterr()
     assert "Inference failed: ML service returned HTTP 500" in captured.err
+
+
+def test_feature_extraction_failures_are_logged_to_stderr(capsys):
+    live_runner._print_inference_failures([
+        {
+            "status": "feature_extraction_failed",
+            "error": "Missing field: duration",
+        },
+    ])
+
+    captured = capsys.readouterr()
+    assert "Feature extraction failed: Missing field: duration" in captured.err
+
+
+def test_live_capture_handles_flush_expired_error(monkeypatch, capsys):
+    class FlushFailingPipeline(FakePipeline):
+        def flush_expired(self, current_time):
+            raise RuntimeError("Database pool exhausted during flush")
+
+    pipeline = FlushFailingPipeline()
+
+    sniff_calls = 0
+
+    def fake_sniff(**kwargs):
+        nonlocal sniff_calls
+        sniff_calls += 1
+        kwargs["prn"](object())
+        if sniff_calls == 1:
+            # Advance monotonic time so now - last_flush >= flush_interval
+            import time
+            time.sleep(0.02)
+        elif sniff_calls >= 2:
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(live_runner, "sniff", fake_sniff)
+
+    report = live_runner.process_live_capture(
+        interface="eth0",
+        pipeline=pipeline,
+        flush_interval=0.001,
+    )
+
+    captured = capsys.readouterr()
+    assert "Flow flush error: Database pool exhausted during flush" in captured.err
+    assert report["processing_errors"] >= 1
+    assert report["stop_reason"] == "interrupted"
+
+
+def test_live_capture_handles_shutdown_flush_error(monkeypatch, capsys):
+    class ShutdownFailingPipeline(FakePipeline):
+        def flush_all(self):
+            raise ValueError("Corrupted flow state on shutdown")
+
+    pipeline = ShutdownFailingPipeline()
+
+    def fake_sniff(**kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(live_runner, "sniff", fake_sniff)
+
+    report = live_runner.process_live_capture(
+        interface="eth0",
+        pipeline=pipeline,
+    )
+
+    captured = capsys.readouterr()
+    assert "Shutdown flush error: Corrupted flow state on shutdown" in captured.err
+    assert report["processing_errors"] >= 1
+    assert "pipeline_status" in report
+

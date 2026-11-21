@@ -1,4 +1,3 @@
-
 import math
 
 import pytest
@@ -100,7 +99,18 @@ def test_directional_payload_bytes(features):
 def test_packet_length_statistics(features):
     assert features["Fwd Packet Length Mean"] == 60.0
     assert features["Bwd Packet Length Mean"] == 80.0
-    assert features["Packet Length Mean"] == 70.0
+
+    assert features["Min Packet Length"] == 100.0
+    assert features["Max Packet Length"] == 120.0
+    assert features["Packet Length Mean"] == 110.0
+
+    assert math.isclose(
+        features["Packet Length Std"],
+        math.sqrt(200.0),
+        rel_tol=1e-9,
+    )
+
+    assert features["Packet Length Variance"] == 200.0
 
 
 def test_flow_iat_is_converted_to_microseconds(features):
@@ -238,6 +248,7 @@ def test_tcp_flag_features_return_binary_indicators_for_multiple_packets():
     assert flow_features["Fwd PSH Flags"] == 1.0
     assert flow_features["Fwd URG Flags"] == 0.0
 
+
 def test_missing_required_field_is_rejected(flow_record):
     del flow_record["destination_port"]
 
@@ -262,3 +273,25 @@ def test_negative_flow_duration_is_rejected(flow_record):
 def test_non_mapping_input_is_rejected():
     with pytest.raises(TypeError, match="mapping"):
         extract_features(None)
+
+
+def test_cwr_flag_mapped_to_cwe_flag_count(flow_record):
+    flow_record["tcp_flags"] = {"CWR": 1}
+    features = extract_features(flow_record)
+    assert features["CWE Flag Count"] == 1.0
+
+
+def test_cwe_flag_mapped_to_cwe_flag_count(flow_record):
+    flow_record["tcp_flags"] = {"CWE": 1}
+    features = extract_features(flow_record)
+    assert features["CWE Flag Count"] == 1.0
+
+
+def test_cwe_cwr_absent_produces_zero(flow_record):
+    flow_record["tcp_flags"] = {"SYN": 1, "ACK": 1}
+    features = extract_features(flow_record)
+    assert features["CWE Flag Count"] == 0.0
+
+    flow_record["tcp_flags"] = {}
+    features_empty = extract_features(flow_record)
+    assert features_empty["CWE Flag Count"] == 0.0

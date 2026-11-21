@@ -151,8 +151,13 @@ def _flag(flow: Mapping[str, Any], name: str) -> float:
     if not isinstance(flags, Mapping):
         raise ValueError("Flow record has invalid tcp_flags")
 
+    if name in {"CWE", "CWR"}:
+        raw_count = flags.get("CWE", flags.get("CWR", 0))
+    else:
+        raw_count = flags.get(name, 0)
+
     count = _number(
-        flags.get(name, 0),
+        raw_count,
         f"tcp_flags.{name}",
     )
     return 1.0 if count > 0 else 0.0
@@ -183,8 +188,13 @@ def _directional_flag(
     if not isinstance(flags, Mapping):
         raise ValueError(f"Flow record has invalid {key}")
 
+    if name in {"CWE", "CWR"}:
+        raw_count = flags.get("CWE", flags.get("CWR", 0))
+    else:
+        raw_count = flags.get(name, 0)
+
     count = _number(
-        flags.get(name, 0),
+        raw_count,
         f"{key}.{name}",
     )
     return 1.0 if count > 0 else 0.0
@@ -397,22 +407,21 @@ def extract_features(
         "Fwd Packets/s": forward_packets_per_second,
         "Bwd Packets/s": backward_packets_per_second,
 
-        "Min Packet Length": _stat(
-            flow, "all_payload_lengths", "min"
-        ),
-        "Max Packet Length": _stat(
-            flow, "all_payload_lengths", "max"
-        ),
-        "Packet Length Mean": _stat(
-            flow, "all_payload_lengths", "mean"
-        ),
-        "Packet Length Std": _stat(
-            flow, "all_payload_lengths", "sample_std"
-        ),
-        "Packet Length Variance": _stat(
-            flow, "all_payload_lengths", "sample_variance"
-        ),
-
+       "Min Packet Length": _stat(
+    flow, "all_lengths", "min"
+),
+"Max Packet Length": _stat(
+    flow, "all_lengths", "max"
+),
+"Packet Length Mean": _stat(
+    flow, "all_lengths", "mean"
+),
+"Packet Length Std": _stat(
+    flow, "all_lengths", "sample_std"
+),
+"Packet Length Variance": _stat(
+    flow, "all_lengths", "sample_variance"
+),
         "FIN Flag Count": _flag(flow, "FIN"),
         "SYN Flag Count": _flag(flow, "SYN"),
         "RST Flag Count": _flag(flow, "RST"),

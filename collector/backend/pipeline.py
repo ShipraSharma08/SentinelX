@@ -127,8 +127,23 @@ class NetworkFlowPipeline:
         """Extract features and request inference for one completed flow."""
         self.flows_completed += 1
 
-        summary = self._flow_summary(flow)
-        features = extract_features(flow)
+        try:
+            summary = self._flow_summary(flow)
+        except (KeyError, TypeError):
+            summary = {
+                "event_id": flow.get("event_id") if isinstance(flow, dict) else None
+            }
+
+        try:
+            features = extract_features(flow)
+        except (ValueError, KeyError) as exc:
+            self.predictions_failed += 1
+
+            return {
+                "status": "feature_extraction_failed",
+                "flow": summary,
+                "error": str(exc),
+            }
 
         try:
             prediction = self.ml_client.predict(features)

@@ -1,8 +1,12 @@
 
+import logging
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from ml.inference.predict import _load_model, predict_flow
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="SentinelX ML Inference API",
@@ -64,6 +68,7 @@ def predict(request: PredictionRequest):
             detail="Trained ML model is unavailable.",
         ) from exc
     except Exception as exc:
+        logger.exception("Prediction failed unexpectedly: %s", exc)
         raise HTTPException(
             status_code=500,
             detail="Prediction failed unexpectedly.",

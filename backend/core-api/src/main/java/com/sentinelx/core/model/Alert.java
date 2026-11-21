@@ -1,5 +1,6 @@
 package com.sentinelx.core.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -18,6 +19,7 @@ public class Alert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "security_event_id")
     private SecurityEvent securityEvent;
@@ -90,6 +92,7 @@ public class Alert {
         this.id = id;
     }
 
+    @JsonIgnore
     public SecurityEvent getSecurityEvent() {
         return securityEvent;
     }

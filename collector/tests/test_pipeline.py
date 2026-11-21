@@ -254,6 +254,92 @@ def test_ml_failure_is_reported_without_crashing(
     assert pipeline.predictions_succeeded == 0
 
 
+def test_feature_extraction_failure_is_reported_without_crashing(
+    pipeline,
+    ml_client,
+    monkeypatch,
+):
+    def fake_extract_features(flow):
+        raise ValueError("Malformed flow field")
+
+    monkeypatch.setattr(
+        "collector.backend.pipeline.extract_features",
+        fake_extract_features,
+    )
+
+    first = make_packet(
+        "192.168.1.10",
+        "192.168.1.20",
+        50000,
+        80,
+        1.0,
+        "S",
+        b"hello",
+    )
+    pipeline.process_packet(first)
+    results = pipeline.flush_all()
+
+    assert len(results) == 1
+    assert results[0]["status"] == "feature_extraction_failed"
+    assert "Malformed flow field" in results[0]["error"]
+    assert pipeline.predictions_failed == 1
+    assert pipeline.predictions_succeeded == 0
+    ml_client.predict.assert_not_called()
+
+
+def test_feature_extraction_failure_does_not_stop_remaining_flows(
+    pipeline,
+    ml_client,
+    monkeypatch,
+):
+    call_count = 0
+    from collector.features.extractor import extract_features as real_extract
+
+    def selectively_failing_extract(flow):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise KeyError("missing_key")
+        return real_extract(flow)
+
+    monkeypatch.setattr(
+        "collector.backend.pipeline.extract_features",
+        selectively_failing_extract,
+    )
+
+    flow1_pkt = make_packet(
+        "192.168.1.10",
+        "192.168.1.20",
+        50000,
+        80,
+        1.0,
+        "S",
+        b"hello",
+    )
+    flow2_pkt = make_packet(
+        "192.168.1.30",
+        "192.168.1.40",
+        50001,
+        80,
+        1.0,
+        "S",
+        b"world",
+    )
+
+    pipeline.process_packet(flow1_pkt)
+    pipeline.process_packet(flow2_pkt)
+
+    results = pipeline.flush_all()
+
+    assert len(results) == 2
+    assert results[0]["status"] == "feature_extraction_failed"
+    assert "missing_key" in results[0]["error"]
+    assert results[1]["status"] == "success"
+    assert pipeline.predictions_failed == 1
+    assert pipeline.predictions_succeeded == 1
+    assert ml_client.predict.call_count == 1
+
+
 def test_pipeline_status_tracks_processing(pipeline):
     packet = make_packet(
         "192.168.1.10",

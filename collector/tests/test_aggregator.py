@@ -491,3 +491,37 @@ def test_min_seg_size_forward_udp_regression():
 
     record = aggregator.flush_all()[0]
     assert record["min_seg_size_forward"] == 28
+
+
+def test_single_packet_flow_expires_on_flow_timeout_and_is_emitted():
+    # Set idle_timeout high so expiration is triggered strictly by flow_timeout
+    aggregator = FlowAggregator(flow_timeout=5.0, idle_timeout=60.0)
+
+    packet1 = make_packet(timestamp=1.0)
+    assert aggregator.ingest(packet1) == []
+    assert len(aggregator.active_flows) == 1
+
+    # Packet for the same flow arriving after flow_timeout
+    packet2 = make_packet(timestamp=7.0)
+    expired = aggregator.ingest(packet2)
+
+    # 1. Single-packet flow is emitted when expiring due to flow_timeout
+    assert len(expired) == 1
+    assert expired[0]["packets"] == 1
+    assert expired[0]["first_seen"] == 1.0
+    assert expired[0]["last_seen"] == 1.0
+
+    # 2. Expired flow is removed from active flows, replaced by new flow
+    assert len(aggregator.active_flows) == 1
+    active_flow = next(iter(aggregator.active_flows.values()))
+    assert active_flow.first_seen == 7.0
+    assert active_flow.total_packets == 1
+
+
+def test_packet_record_accepts_cwr_and_cwe_flags():
+    pkt_cwr = make_packet(tcp_flags=frozenset({"CWR"}))
+    assert "CWR" in pkt_cwr.tcp_flags
+
+    pkt_cwe = make_packet(tcp_flags=frozenset({"CWE"}))
+    assert "CWR" in pkt_cwe.tcp_flags
+
