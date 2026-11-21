@@ -48,10 +48,22 @@ models/*.pth
 *.tmp
 *.temp
 
-# SentinelX ML data and generated model artifacts
-/ml/data/raw/
-/ml/models/
 
 # Collector generated reports
 /collector/reports/
 backend/core-api/src/main/java/com/sentinelx/core/config/SecurityConfig.java.pre-rbac
+
+
+
+# SentinelX deployment artifacts
+/ml/data/
+/ml/models/*
+!/ml/models/web_coverage_candidate.joblib
+
+# Backup and temporary files
+*.save
+*.bak
+*.backup
+
+# Docker practice files (not part of SentinelX)
+/docker-practice/

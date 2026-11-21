@@ -14,12 +14,20 @@ COPY src ./src
 RUN ./mvnw -B -DskipTests package
 
 
-# Stage 2: Run the application
+# Stage 2: Run the application securely
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY --from=build /app/target/*.jar app.jar
+# Create a dedicated non-root user
+RUN groupadd --system spring \
+    && useradd --system --gid spring --create-home spring
+
+# Copy application JAR with correct ownership
+COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
+
+# Run as non-root user
+USER spring:spring
 
 EXPOSE 8080
 
