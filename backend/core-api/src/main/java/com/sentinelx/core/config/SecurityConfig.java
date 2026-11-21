@@ -3,6 +3,7 @@ package com.sentinelx.core.config;
 
 import com.sentinelx.core.security.CollectorAuthenticationFilter;
 import com.sentinelx.core.security.JwtAuthenticationFilter;
+import com.sentinelx.core.security.RateLimitFilter;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -129,13 +130,15 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class)
-            .addFilterAfter(
-                collectorAuthenticationFilter,
-                JwtAuthenticationFilter.class);
-
+           .addFilterBefore(
+    new RateLimitFilter(),
+    UsernamePasswordAuthenticationFilter.class)
+.addFilterBefore(
+    jwtAuthenticationFilter,
+    UsernamePasswordAuthenticationFilter.class)
+.addFilterAfter(
+    collectorAuthenticationFilter,
+    JwtAuthenticationFilter.class);
         return http.build();
     }
 
