@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: sentinelx-postgres-prod
+    restart: unless-stopped
+
+    env_file:
+      - /home/acer/SentinelX-backups/docker-postgres.env
+
+    environment:
+      POSTGRES_DB: sentinelx
+      POSTGRES_USER: sentinelx_app
+
+    # No public port exposure
+    volumes:
+      - sentinelx_prod_pgdata:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinelx_app -d sentinelx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - private-network
+
+
+  ml:
+    image: sentinelx-ml:latest
+    container_name: sentinelx-ml-prod
+    restart: unless-stopped
+
+    # No public port exposure
+    networks:
+      - private-network
+
+
+  backend:
+    image: sentinelx-backend:latest
+    container_name: sentinelx-backend-prod
+    restart: unless-stopped
+
+    env_file:
+      - /home/acer/SentinelX-backups/backend.env
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sentinelx
+      SENTINELX_ML_BASE_URL: http://ml:8000
+
+    # No public port exposure
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml:
+        condition: service_started
+
+    networks:
+      - private-network
+      - proxy-network
+
+
+  frontend:
+    image: sentinelx-frontend:latest
+    container_name: sentinelx-frontend-prod
+    restart: unless-stopped
+
+    ports:
+      - "3000:80"
+
+    volumes:
+      - ./frontend/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+
+    depends_on:
+      - backend
+
+    networks:
+      - proxy-network
+
+
+volumes:
+  sentinelx_prod_pgdata:
+
+
+networks:
+  private-network:
+    internal: true
+
+  proxy-network:
