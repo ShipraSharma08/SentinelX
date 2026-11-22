@@ -29,6 +29,8 @@ COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 # Run as non-root user
 USER spring:spring
 
+# Render provides PORT dynamically
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Bind Spring Boot to Render's PORT
+ENTRYPOINT ["sh", "-c", "exec java -jar app.jar --server.port=${PORT:-8080}"]
