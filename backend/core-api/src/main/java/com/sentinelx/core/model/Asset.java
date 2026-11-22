@@ -1,4 +1,3 @@
-
 package com.sentinelx.core.model;
 
 import jakarta.persistence.*;
@@ -48,6 +47,22 @@ public class Asset {
     private OffsetDateTime updatedAt;
 
     public Asset() {
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+
+        if (createdAt == null) {
+            createdAt = now;
+        }
+
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = OffsetDateTime.now();
     }
 
     public Long getId() {
