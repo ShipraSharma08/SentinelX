@@ -13,17 +13,31 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI sentinelXOpenAPI() {
+
         return new OpenAPI()
             .info(new Info()
                 .title("SentinelX Core API")
                 .version("1.0.0")
                 .description("SentinelX security monitoring API"))
+
             .components(new Components()
+
+                // JWT Authentication
                 .addSecuritySchemes("Bearer Authentication",
                     new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
-                        .bearerFormat("JWT")))
+                        .bearerFormat("JWT"))
+
+                // Collector API Key Authentication
+                .addSecuritySchemes("Collector API Key",
+                    new SecurityScheme()
+                        .type(SecurityScheme.Type.APIKEY)
+                        .in(SecurityScheme.In.HEADER)
+                        .name("X-Collector-Key")
+                        .description("Collector authentication API key")))
+
+            // Default authentication for normal APIs
             .addSecurityItem(
                 new SecurityRequirement()
                     .addList("Bearer Authentication"));
