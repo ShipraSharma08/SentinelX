@@ -49,7 +49,7 @@ def run_tests():
         data=b"{}",
         headers={
             "Content-Type": "application/json",
-            "X-Collector-Key": "wrong_key_123",
+            "X-Collector-Key": "invalid-test-key",
         },
         method="POST",
     )
