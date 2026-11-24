@@ -162,7 +162,12 @@ public class SecurityConfig {
                 "OPTIONS"
         ));
 
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "X-Collector-Key",
+                "Accept"
+        ));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

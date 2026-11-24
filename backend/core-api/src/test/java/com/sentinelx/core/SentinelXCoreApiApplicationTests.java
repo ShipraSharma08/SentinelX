@@ -1,5 +1,6 @@
 package com.sentinelx.core;
 
+import com.sentinelx.core.dto.alert.CreateAlertRequest;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.service.AlertService;
 
@@ -99,7 +100,7 @@ class SentinelXCoreApiApplicationTests {
                 1L, "Suspicious Login", "HIGH"
         );
 
-        when(alertService.createAlert(any(Alert.class)))
+        when(alertService.createAlert(any(CreateAlertRequest.class)))
                 .thenReturn(createdAlert);
 
         String requestBody = """
@@ -165,7 +166,8 @@ class SentinelXCoreApiApplicationTests {
         ));
 
         mockMvc.perform(get("/api/alerts/search")
-                        .param("status", "OPEN"))
+                        .param("status", "OPEN")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].status")
                         .value("OPEN"));
@@ -187,7 +189,8 @@ class SentinelXCoreApiApplicationTests {
         ));
 
         mockMvc.perform(get("/api/alerts/search")
-                        .param("severity", "CRITICAL"))
+                        .param("severity", "CRITICAL")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].severity")
                         .value("CRITICAL"));

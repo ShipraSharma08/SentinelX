@@ -1,10 +1,10 @@
-
 package com.sentinelx.core;
 
+import com.sentinelx.core.dto.alert.CreateAlertRequest;
+import com.sentinelx.core.dto.ml.MLPredictionRequest;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.model.Asset;
 import com.sentinelx.core.model.MLPrediction;
-import com.sentinelx.core.dto.ml.MLPredictionRequest;
 import com.sentinelx.core.service.AlertService;
 import com.sentinelx.core.service.AssetService;
 import com.sentinelx.core.service.MLPredictionService;
@@ -89,7 +89,8 @@ class SecurityAuthorizationTests {
                         .content(ALERT_REQUEST))
                 .andExpect(status().isForbidden());
 
-        verify(alertService, never()).createAlert(any(Alert.class));
+        verify(alertService, never())
+                .createAlert(any(CreateAlertRequest.class));
     }
 
     @Test
@@ -103,7 +104,7 @@ class SecurityAuthorizationTests {
         alert.setRiskScore(new BigDecimal("75.00"));
         alert.setStatus("OPEN");
 
-        when(alertService.createAlert(any(Alert.class)))
+        when(alertService.createAlert(any(CreateAlertRequest.class)))
                 .thenReturn(alert);
 
         mockMvc.perform(post("/api/alerts")
@@ -123,7 +124,7 @@ class SecurityAuthorizationTests {
         alert.setRiskScore(new BigDecimal("75.00"));
         alert.setStatus("OPEN");
 
-        when(alertService.createAlert(any(Alert.class)))
+        when(alertService.createAlert(any(CreateAlertRequest.class)))
                 .thenReturn(alert);
 
         mockMvc.perform(post("/api/alerts")

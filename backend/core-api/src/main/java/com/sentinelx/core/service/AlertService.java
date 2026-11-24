@@ -1,8 +1,8 @@
 package com.sentinelx.core.service;
 
+import com.sentinelx.core.dto.alert.CreateAlertRequest;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.repository.AlertRepository;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class AlertService {
@@ -25,7 +26,9 @@ public class AlertService {
     }
 
     public List<Alert> getAllAlerts() {
-        return alertRepository.findAll();
+        return alertRepository.findAll(
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
     }
 
     public Page<Alert> getAlerts(
@@ -34,10 +37,11 @@ public class AlertService {
             int page,
             int size
     ) {
+
         if (page < 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Page must be zero or greater"
+                    "Page number cannot be negative"
             );
         }
 
@@ -58,12 +62,11 @@ public class AlertService {
         boolean hasSeverity = severity != null && !severity.isBlank();
 
         if (hasStatus && hasSeverity) {
-            return alertRepository
-                    .findByStatusIgnoreCaseAndSeverityIgnoreCase(
-                            status.trim(),
-                            severity.trim(),
-                            pageable
-                    );
+            return alertRepository.findByStatusIgnoreCaseAndSeverityIgnoreCase(
+                    status.trim(),
+                    severity.trim(),
+                    pageable
+            );
         }
 
         if (hasStatus) {
@@ -91,37 +94,80 @@ public class AlertService {
                 ));
     }
 
-    public Alert createAlert(Alert alert) {
+    /**
+     * Creates a manually submitted alert.
+     * Client-controlled fields are restricted through CreateAlertRequest.
+     * Sensitive fields are always controlled by the backend.
+     */
+    public Alert createAlert(CreateAlertRequest request) {
+
+        Alert alert = new Alert();
+
+        alert.setTitle(request.title().trim());
+        alert.setDescription(request.description());
+        alert.setSeverity(request.severity().trim().toUpperCase(Locale.ROOT));
+        alert.setRiskScore(request.riskScore());
+
+        // Backend-controlled fields
+        alert.setId(null);
+        alert.setStatus("OPEN");
+        alert.setCreatedAt(OffsetDateTime.now());
+        alert.setAcknowledgedAt(null);
+        alert.setResolvedAt(null);
+        alert.setMlPredictionId(null);
+        alert.setSecurityEvent(null);
+
         return alertRepository.save(alert);
     }
 
+    /**
+     * Acknowledges an alert.
+     *
+     * A resolved alert cannot be acknowledged.
+     * Repeated acknowledgement requests are idempotent.
+     * The original acknowledgement timestamp is preserved.
+     */
     @Transactional
     public Alert acknowledgeAlert(Long id) {
+
         Alert alert = getAlertById(id);
 
         if ("RESOLVED".equalsIgnoreCase(alert.getStatus())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Resolved alerts cannot be acknowledged"
+                    "Resolved alert cannot be acknowledged"
             );
         }
 
-        if (!"ACKNOWLEDGED".equalsIgnoreCase(alert.getStatus())) {
-            alert.setStatus("ACKNOWLEDGED");
-            alert.setAcknowledgedAt(OffsetDateTime.now());
+        // Already acknowledged: do not overwrite the original timestamp.
+        if ("ACKNOWLEDGED".equalsIgnoreCase(alert.getStatus())) {
+            return alert;
         }
+
+        alert.setStatus("ACKNOWLEDGED");
+        alert.setAcknowledgedAt(OffsetDateTime.now());
 
         return alertRepository.save(alert);
     }
 
+    /**
+     * Resolves an alert.
+     *
+     * Repeated resolution requests are idempotent.
+     * The original resolution timestamp is preserved.
+     */
     @Transactional
     public Alert resolveAlert(Long id) {
+
         Alert alert = getAlertById(id);
 
-        if (!"RESOLVED".equalsIgnoreCase(alert.getStatus())) {
-            alert.setStatus("RESOLVED");
-            alert.setResolvedAt(OffsetDateTime.now());
+        // Already resolved: preserve the original resolution timestamp.
+        if ("RESOLVED".equalsIgnoreCase(alert.getStatus())) {
+            return alert;
         }
+
+        alert.setStatus("RESOLVED");
+        alert.setResolvedAt(OffsetDateTime.now());
 
         return alertRepository.save(alert);
     }

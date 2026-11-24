@@ -1,4 +1,3 @@
-
 services:
   postgres:
     image: postgres:18
@@ -10,7 +9,7 @@ services:
       POSTGRES_DB: sentinelx
       POSTGRES_USER: sentinelx_app
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - sentinelx_pgdata:/var/lib/postgresql
     networks:
@@ -21,7 +20,7 @@ services:
     container_name: sentinelx-ml-test
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     networks:
       - sentinelx-network
 
@@ -32,7 +31,7 @@ services:
     env_file:
       - /home/acer/SentinelX-backups/backend.env
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       - postgres
       - ml
@@ -44,7 +43,7 @@ services:
     container_name: sentinelx-frontend-test
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "127.0.0.1:3000:80"
     depends_on:
       - backend
     networks:

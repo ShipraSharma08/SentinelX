@@ -2,7 +2,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { mlApi, ApiError, type AuthSession, type PredictionResult } from '../lib/api'
 import './MLPredictionUpload.css'
-
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024 // 25 MB
 const MODEL_FEATURES = [
   'Destination Port',
   'Flow Duration',
@@ -291,13 +291,22 @@ export default function MLPredictionUpload({
   const [sourceLabel, setSourceLabel] = useState('')
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const selected = event.target.files?.[0] ?? null
+  const selected = event.target.files?.[0] ?? null
 
-    setFile(selected)
-    setError('')
-    setResult(null)
-    setSourceLabel('')
+  setError('')
+  setResult(null)
+  setSourceLabel('')
+
+  if (selected && selected.size > MAX_FILE_SIZE_BYTES) {
+    setFile(null)
+    event.target.value = ''
+
+    setError('CSV file size must not exceed 25 MB.')
+    return
   }
+
+  setFile(selected)
+}
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -310,6 +319,10 @@ export default function MLPredictionUpload({
       setError('Please select a CSV file first.')
       return
     }
+if (file.size > MAX_FILE_SIZE_BYTES) {
+  setError('CSV file size must not exceed 25 MB.')
+  return
+}
 
     const selectedRow = Number(rowNumber)
 

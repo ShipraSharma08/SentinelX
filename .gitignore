@@ -67,3 +67,20 @@ backend/core-api/src/main/java/com/sentinelx/core/config/SecurityConfig.java.pre
 
 # Docker practice files (not part of SentinelX)
 /docker-practice/
+# Security-sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Credential and secret files
+credentials.json
+credentials.yaml
+credentials.yml
+secrets.json
+secrets.yaml
+secrets.yml
+*_credentials*
+*_secret*

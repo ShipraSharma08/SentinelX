@@ -1,10 +1,9 @@
 package com.sentinelx.core.controller;
 
+import com.sentinelx.core.dto.alert.CreateAlertRequest;
 import com.sentinelx.core.model.Alert;
 import com.sentinelx.core.service.AlertService;
-
 import jakarta.validation.Valid;
-
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,7 @@ public class AlertController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String severity,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(
                 alertService.getAlerts(status, severity, page, size)
@@ -40,15 +39,17 @@ public class AlertController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Alert> getAlertById(@PathVariable Long id) {
+    public ResponseEntity<Alert> getAlertById(
+            @PathVariable Long id
+    ) {
         return ResponseEntity.ok(alertService.getAlertById(id));
     }
 
     @PostMapping
     public ResponseEntity<Alert> createAlert(
-            @Valid @RequestBody Alert alert
+            @Valid @RequestBody CreateAlertRequest request
     ) {
-        Alert createdAlert = alertService.createAlert(alert);
+        Alert createdAlert = alertService.createAlert(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -56,12 +57,20 @@ public class AlertController {
     }
 
     @PatchMapping("/{id}/acknowledge")
-    public ResponseEntity<Alert> acknowledgeAlert(@PathVariable Long id) {
-        return ResponseEntity.ok(alertService.acknowledgeAlert(id));
+    public ResponseEntity<Alert> acknowledgeAlert(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                alertService.acknowledgeAlert(id)
+        );
     }
 
     @PatchMapping("/{id}/resolve")
-    public ResponseEntity<Alert> resolveAlert(@PathVariable Long id) {
-        return ResponseEntity.ok(alertService.resolveAlert(id));
+    public ResponseEntity<Alert> resolveAlert(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                alertService.resolveAlert(id)
+        );
     }
 }
