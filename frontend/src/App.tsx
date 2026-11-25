@@ -67,6 +67,7 @@ function App() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [authError, setAuthError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -427,19 +428,45 @@ function App() {
                 />
               </>
             )}
-
             <label>Password</label>
-            <input
-              required
-              minLength={mode === 'register' ? 8 : undefined}
-              type="password"
-              autoComplete={
-                mode === 'login' ? 'current-password' : 'new-password'
-              }
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter password"
-            />
+<div style={{ position: 'relative' }}>
+  <input
+    required
+    minLength={mode === 'register' ? 8 : undefined}
+    type={showPassword ? 'text' : 'password'}
+    autoComplete={
+      mode === 'login' ? 'current-password' : 'new-password'
+    }
+    value={password}
+    onChange={(event) => setPassword(event.target.value)}
+    placeholder="Enter password"
+    style={{ paddingRight: 46 }}
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowPassword((visible) => !visible)}
+    aria-label={showPassword ? 'Hide password' : 'Show password'}
+    title={showPassword ? 'Hide password' : 'Show password'}
+    style={{
+      position: 'absolute',
+      right: 12,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      background: 'transparent',
+      border: 'none',
+      color: '#8fa2b9',
+      cursor: 'pointer',
+      padding: 4,
+      fontSize: 16,
+      lineHeight: 1,
+    }}
+  >
+    {showPassword ? '🙈' : '👁'}
+  </button>
+</div>
+
+           
 
             {authError && <div className="auth-error">{authError}</div>}
 
